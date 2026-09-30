@@ -40,7 +40,7 @@ namespace WordQuest
                 UI.Place(cell.rectTransform, 0, 0.5f, 125 + i * 250, 0, 236, 250);
                 var ic = UI.Icon(cell.transform, si[i], 90, "Ic"); UI.Place(ic.rectTransform, 0.5f, 1, 0, -70, 90, 90);
                 var v = UI.Label(cell.transform, sv[i].ToString("N0"), 44, Palette.Ink); UI.Place(v.rectTransform, 0.5f, 0.5f, 0, -30, 220, 56);
-                var l = UI.Label(cell.transform, sn[i], 26, Palette.InkSoft); UI.Place(l.rectTransform, 0.5f, 0, 0, 40, 220, 34);
+                var l = UI.Label(cell.transform, sn[i], 26, Palette.InkSoft); UI.Place(l.rectTransform, 0.5f, 0, 0, 56, 220, 34);
             }
             y += 20;
 

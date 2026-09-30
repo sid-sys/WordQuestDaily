@@ -20,6 +20,7 @@ namespace WordQuest
         /// <summary>Dark scrim + a rounded card with a ribbon title. Add your content to popup.Content.</summary>
         public Popup OpenPopup(string title, float w, float h, bool closable = true, string ribbon = "ribbon_green", Action onClose = null)
         {
+            h = Mathf.Min(h, canvasRt.rect.height - 150);
             var p = new Popup { Width = w, Height = h, OnClose = onClose };
             p.Root = UI.Stretch(UI.Node(popupLayer, "Popup_" + title));
             var scrim = UI.Solid(p.Root, new Color(0.03f, 0.05f, 0.14f, 0.72f), "Scrim", true);

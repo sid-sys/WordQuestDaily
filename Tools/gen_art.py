@@ -1,6 +1,6 @@
 """Generate sprite sheets with gpt-image-1.5 (medium quality).
 
-Usage:  python Tools/gen_art.py <sheet> [<sheet> ...]      (or: all)
+Usage:  python Tools/gen_art.py <sheet> [<sheet> ...] [--force]      (or: all). Existing sheets are skipped.
 The API key is read from D:\\UNITY GAMES\\.env.local (OPENAI_API=...). It is never printed or committed.
 Every call is logged to Tools/cost_log.csv so the total cost is known.
 """
@@ -118,12 +118,17 @@ def read_key():
 
 
 def main(names):
+    force = "--force" in names
+    names = [n for n in names if n != "--force"]
     client = OpenAI(api_key=read_key())
     OUT.mkdir(parents=True, exist_ok=True)
     if names == ["all"]:
         names = list(SHEETS)
     for name in names:
         size, transparent, prompt = SHEETS[name]
+        if (OUT / f"{name}.png").exists() and not force:
+            print(f"{name}: already exists, skipped (use --force to pay for it again)")
+            continue
         t = time.time()
         kw = dict(model=MODEL, prompt=prompt, size=size, quality="medium", n=1, output_format="png")
         if transparent:

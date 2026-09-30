@@ -48,7 +48,7 @@ namespace WordQuest
                     UI.Place((RectTransform)claim.transform, 1, 0.5f, -130, -50, 200, 84);
                     claim.gameObject.AddComponent<Pulse>().Amount = 0.06f;
                 }
-                var next = UI.Label(row, Progress.StepLabel(cat), 26, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(next.rectTransform, 0, 0, 230, 32, 520, 34);
+                var next = UI.Label(row, Progress.StepLabel(cat), 26, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(next.rectTransform, 0, 0, 230, 44, 520, 34);
                 y += 14;
             }
             EndScroll(content, y);

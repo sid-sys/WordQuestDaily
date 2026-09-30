@@ -69,7 +69,7 @@ namespace WordQuest
             float size = isCur ? 164 : 140;
             var n = UI.Icon(row, art, size, "Level" + lv);
             UI.Place(n.rectTransform, 0.5f, 1, x, -85, size, size);
-            var t = UI.Label(n.transform, locked ? "" : lv.ToString(), isCur ? 58 : 44, isCur ? Palette.Ink : Color.white, TextAnchor.MiddleCenter, !isCur);
+            var t = UI.Label(n.transform, isCur ? lv.ToString() : "", 58, Palette.Ink, TextAnchor.MiddleCenter, false);
             UI.Stretch(t.rectTransform, 0, 8, 0, 0);
             if (done || isCur)
             {
@@ -82,6 +82,11 @@ namespace WordQuest
                 UI.Place(ring.rectTransform, 0.5f, 1, x, -85, 210, 210);
                 ring.transform.SetAsFirstSibling();
                 ring.gameObject.AddComponent<Pulse>().Amount = 0.1f;
+            }
+            if (!isCur)
+            {
+                var nb = UI.Label(row, lv.ToString(), 34, Color.white, TextAnchor.MiddleCenter, true);
+                UI.Place(nb.rectTransform, 0.5f, 1, x, locked ? -178 : -226, 120, 40);
             }
             if (!locked)
             {
