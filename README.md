@@ -7,7 +7,10 @@ A word search game for phones, made with Unity 6 (URP 2D, portrait).
 - Daily Quest (same puzzle for everyone each day), streak with freezes, daily reward once per day (resets at 00:00).
 - Word collection with 12 categories, coins, XP, power-ups (Shuffle, Hint, Reveal Letter, Word Finder, Reveal Word).
 - Weekly league (simulated rivals), achievements, avatars, board themes, word effects.
-- All UI is built in code from generated sprite sheets (`Assets/Resources/Art`).
+- All UI is built in code from generated sprite sheets (`Assets/Resources/Art`). Pills and cards are drawn in code so corners are exact; animations use DOTween.
+- Hand tutorials teach swiping (level 1) and one power-up at a time (Hint L1, Shuffle L3, Reveal Letter L7, Word Finder L12, Reveal Word L18); each power-up is locked until its lesson is done.
+- Effects Lab (Profile or Settings) previews every word effect and sound and shows which one is in use.
+- Google Mobile Ads (AdMob) and Unity IAP are wired (Remove Ads + 3 coin bags); test ads in the Editor / debug builds.
 
 ## Project layout
 - `Assets/Scripts/Core` - levels, puzzle generator, economy, save data, league

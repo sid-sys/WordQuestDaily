@@ -87,7 +87,7 @@ namespace WordQuest
         public void ShowSettings()
         {
             var d = SaveSystem.Data;
-            var p = OpenPopup("SETTINGS", 900, 900);
+            var p = OpenPopup("SETTINGS", 900, 1040);
             float y = 40;
             void Toggle(string label, Func<bool> get, Action<bool> set)
             {
@@ -111,12 +111,14 @@ namespace WordQuest
             Toggle("Sound", () => d.sound, v => d.sound = v);
             Toggle("Haptics", () => d.haptics, v => d.haptics = v);
 
-            var about = UI.Label(p.Content, "Word Quest Daily  v" + Application.version, 32, Palette.InkSoft);
-            UI.Place(about.rectTransform, 0.5f, 0, 0, 200, 800, 44);
             var priv = UI.Pill(p.Content, "btn_blue", "PRIVACY POLICY", 520, 96, () => Application.OpenURL("https://sid-sys.github.io/wordquestdaily-privacy/"), 40);
-            UI.Place((RectTransform)priv.transform, 0.5f, 0, 0, 110, 520, 96);
+            UI.Place((RectTransform)priv.transform, 0.5f, 0, 0, 120, 520, 96);
             var how = UI.Pill(p.Content, "btn_yellow", "HOW TO PLAY", 520, 96, () => { p.Close(); ShowHowTo(); }, 40);
-            UI.Place((RectTransform)how.transform, 0.5f, 0, 0, 270, 520, 96);
+            UI.Place((RectTransform)how.transform, 0.5f, 0, 0, 250, 520, 96);
+            var lab = UI.Pill(p.Content, "btn_purple", "EFFECTS LAB", 520, 96, () => { p.Close(); ShowEffectsLab(); }, 40);
+            UI.Place((RectTransform)lab.transform, 0.5f, 0, 0, 380, 520, 96);
+            var about = UI.Label(p.Content, "Word Quest Daily  v" + Application.version, 28, Palette.InkSoft);
+            UI.Place(about.rectTransform, 0.5f, 0, 0, 36, 800, 40);
         }
 
         public void ShowHowTo()
@@ -180,6 +182,7 @@ namespace WordQuest
             claim.onClick.AddListener(() =>
             {
                 if (!Progress.CanClaimDailyReward()) { p.Close(); return; }
+                HoldCoins(1.8f);
                 var rw = Progress.ClaimDailyReward();
                 Sfx.Play(Sfx.Kind.Coin);
                 var from = Vector2.zero;
@@ -224,7 +227,7 @@ namespace WordQuest
                     {
                         if (!done) { Toast("No ad ready. Try again soon.", Palette.Red); return; }
                         SaveSystem.Data.rewardedCoinAdsToday++;
-                        Progress.AddCoins(Economy.AdCoins);
+                        RewardCoins(Economy.AdCoins);
                         Sfx.Play(Sfx.Kind.Coin);
                         Toast($"+{Economy.AdCoins} coins!", Palette.Yellow);
                         if (p.Content != null) BuildShopRows(p, content);

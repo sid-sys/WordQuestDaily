@@ -91,6 +91,10 @@ SHEETS = {
   "Vertical soft painterly mobile game background: a deep blue night sky with a large soft moon, tiny stars and dark hills. "
   "Low contrast, gently blurred, dark but not black, so a puzzle grid on top stays readable. Calm and empty in the middle. "
   "No text, no characters."),
+ "tutorial": ("1024x1024", True,
+  f"{STYLE} A sprite sheet with 2 items side by side, each centered in its own half: 1 a friendly cartoon pointing hand in a white glove "
+  "with the index finger extended pointing up and to the left (the fingertip is the top-left tip of the picture), 2 the same hand slightly "
+  f"tilted and pressed down, index finger bent a little. {GRID}"),
  "brand_mark": ("1024x1024", True,
   f"{STYLE} A game logo mark, no text: a rounded grid of colorful letter-less tiles with a bright glowing swipe line in a rainbow "
   "capsule shape drawn diagonally across three tiles, small sparkles, and a small gold crown or star above. Centered, big, "

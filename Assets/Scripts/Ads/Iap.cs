@@ -91,7 +91,7 @@ namespace WordQuest
             {
                 string id = item.Product.definition.id;
                 if (id == RemoveAds) { if (!d.adsRemoved) { d.adsRemoved = true; Progress.Notify(); Delivered?.Invoke(); } }
-                else if (fresh && Array.IndexOf(CoinPacks, id) >= 0) { Progress.AddCoins(CoinsIn(id)); Delivered?.Invoke(); }
+                else if (fresh && Array.IndexOf(CoinPacks, id) >= 0) { GameApp.I.RewardCoins(CoinsIn(id)); Delivered?.Invoke(); }
             }
         }
 
@@ -125,7 +125,7 @@ namespace WordQuest
         static void FakeBuy(string id)
         {
             if (id == RemoveAds) { SaveSystem.Data.adsRemoved = true; Progress.Notify(); }
-            else Progress.AddCoins(CoinsIn(id));
+            else GameApp.I.RewardCoins(CoinsIn(id));
             Delivered?.Invoke();
         }
 

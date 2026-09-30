@@ -10,6 +10,7 @@ namespace WordQuest
     public static class Sfx
     {
         public enum Kind { Click, Tick, Cancel, Found, Mystery, Complete, Coin, Power, Error, Whoosh, Pop, Level }
+        public static readonly string[] StyleNames = { "Classic", "Soft", "Bright" };
 
         const int Rate = 44100;
         static AudioSource source;
@@ -21,6 +22,9 @@ namespace WordQuest
         {
             if (source == null || SaveSystem.Data == null || !SaveSystem.Data.sound) return;
             source.pitch = 1f;
+            int style = SaveSystem.Data.sfxStyle;
+            if (style == 1) { pitch *= 0.85f; volume *= 0.7f; }        // soft
+            else if (style == 2) { pitch *= 1.22f; volume *= 1.0f; }   // bright
             source.PlayOneShot(Get(kind, pitch), volume);
         }
 

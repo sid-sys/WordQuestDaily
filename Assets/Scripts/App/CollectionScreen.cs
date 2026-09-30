@@ -42,8 +42,9 @@ namespace WordQuest
                 {
                     var claim = UI.Pill(row, "btn_yellow", "CLAIM", 200, 84, () =>
                     {
+                        HoldCoins(1.6f);
                         int coins = Progress.ClaimStep(cat);
-                        if (coins > 0) { Sfx.Play(Sfx.Kind.Coin); Fx.Fly(fxLayer, Vector2.zero, CoinTarget(), "coin", 8, null, () => { Toast($"+{coins} coins!", Palette.Yellow); ShowTab(Tab.Collection); }); }
+                        if (coins > 0) { Sfx.Play(Sfx.Kind.Coin); Fx.Fly(fxLayer, Vector2.zero, CoinTarget(), "coin", 8, null, () => { ShowTab(Tab.Collection); }); }
                     }, 38);
                     UI.Place((RectTransform)claim.transform, 1, 0.5f, -130, -50, 200, 84);
                 }

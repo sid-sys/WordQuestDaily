@@ -18,26 +18,7 @@ namespace WordQuest
             UI.Stretch((RectTransform)sr.transform, 0, 0, 0, 160);
             float y = 10;
 
-            // ---- title + streak ----
-            var top = RowAt(content, ref y, 260);
-            var mark = UI.Img(top, "logo_mark", "Logo");
-            UI.Place(mark.rectTransform, 0.5f, 0.5f, -330, 0, 200, 230);
-            var title = UI.Label(top, "WORD QUEST", 96, Color.white, TextAnchor.MiddleLeft, true);
-            UI.PlaceL(title.rectTransform, 0.5f, 0.5f, -210, 40, 700, 110);
-            var sub = UI.Label(top, "DAILY", 58, Palette.Yellow, TextAnchor.MiddleLeft, true);
-            UI.PlaceL(sub.rectTransform, 0.5f, 0.5f, -205, -50, 300, 70);
-
-            int streak = Progress.EffectiveStreak();
-            var streakRow = RowAt(content, ref y, 110);
-            var sp = UI.Sliced(streakRow, "chip", 100, "Streak");
-            sp.color = new Color(0.10f, 0.15f, 0.32f, 0.92f);
-            UI.Place(sp.rectTransform, 0.5f, 0.5f, 0, 0, 640, 100);
-            var fl = UI.Icon(sp.transform, "flame", 70, "Flame"); UI.Place(fl.rectTransform, 0, 0.5f, 62, 2, 70, 70);
-            var st = UI.Label(sp.transform, streak > 0 ? $"{streak} DAY STREAK" : "START YOUR STREAK", 44, Color.white, TextAnchor.MiddleLeft);
-            UI.PlaceL(st.rectTransform, 0, 0.5f, 116, 0, 420, 60);
-            var fr = UI.Icon(sp.transform, "freeze", 76, "Freeze"); UI.Place(fr.rectTransform, 1, 0.5f, -82, 2, 76, 76);
-            var frt = UI.Label(sp.transform, "x" + d.freezes, 32, Color.white); UI.Place(frt.rectTransform, 1, 0.5f, -30, -20, 60, 40);
-            y += 50;
+            y += 62;   // room for the ribbon that sits on top of the first card
 
             // ---- daily quest card ----
             var q = Levels.Daily(Clock.Today);
@@ -76,22 +57,22 @@ namespace WordQuest
 
             // ---- continue level ----
             int next = Progress.NextLevel;
-            var cont = RowAt(content, ref y, 300);
-            var cbg = UI.Sliced(cont, "card_a", 300, "Continue"); UI.Stretch(cbg.rectTransform);
+            var cont = RowAt(content, ref y, 330);
+            var cbg = UI.Sliced(cont, "card_a", 330, "Continue"); UI.Stretch(cbg.rectTransform);
             var spec = Levels.Get(next);
             var lvT = UI.Label(cont, $"LEVEL {next}", 60, Palette.Ink, TextAnchor.MiddleLeft);
-            UI.PlaceL(lvT.rectTransform, 0, 1, 300, -70, 560, 74);
+            UI.PlaceL(lvT.rectTransform, 0, 1, 300, -62, 560, 74);
             var chap = UI.Label(cont, $"{Levels.ChapterName(next)} - {Levels.DiffName(spec.Diff)}", 32, Levels.DiffColor(spec.Diff), TextAnchor.MiddleLeft);
-            UI.PlaceL(chap.rectTransform, 0, 1, 300, -128, 640, 44);
+            UI.PlaceL(chap.rectTransform, 0, 1, 300, -112, 640, 44);
             var bar = UI.ProgressBar(cont, 560, 40, null, "Chapter");
-            UI.Place(bar.Root, 0, 1, 300 + 320, -176, 640, 40);
-            bar.Root.sizeDelta = new Vector2(640, 40);
+            UI.Place(bar.Root, 0, 1, 300 + 320, -166, 640, 38);
+            bar.Root.sizeDelta = new Vector2(640, 38);
             int ch = Levels.Chapter(next), first = ch * Levels.PerChapter + 1, doneInCh = Mathf.Clamp(next - first, 0, Levels.PerChapter);
             bar.Set(doneInCh / (float)Levels.PerChapter);
             var bt = UI.Label(bar.Root, $"{doneInCh}/{Levels.PerChapter}", 26, Color.white); UI.Stretch(bt.rectTransform);
             var nodeIcon = UI.Icon(cont, "node_current", 220, "Node"); UI.Place(nodeIcon.rectTransform, 0, 0.5f, 160, 0, 220, 220);
             var go = UI.Pill(cont, "btn_green", "CONTINUE", 420, 96, () => OpenPrep(spec), 46);
-            UI.Place((RectTransform)go.transform, 0, 0, 300 + 200, 54, 400, 96);
+            UI.Place((RectTransform)go.transform, 0, 0, 300 + 200, 62, 400, 96);
             y += 24;
 
             // ---- collection + league cards (everything measured from the top of the card) ----

@@ -97,40 +97,6 @@ namespace WordQuest
             }
             y += 10;
 
-            // ---- frames ----
-            Section(content, ref y, "FRAME");
-            var fr = RowAt(content, ref y, 230);
-            for (int i = 0; i < 5; i++)
-            {
-                int idx = i; // 0 = none
-                bool own = i == 0 || d.ringOwned[i - 1];
-                var cell = UI.Sliced(fr, "card_a", 200, "Fr" + i, true); UI.Place(cell.rectTransform, 0, 0.5f, 100 + i * 200, 0, 190, 200);
-                if (i > 0) { var im = UI.Icon(cell.transform, "ring_" + Economy.RingNames[i - 1].ToLower(), 150, "R"); UI.Place(im.rectTransform, 0.5f, 0.5f, 0, 10, 150, 150); if (!own) im.color = new Color(0.4f, 0.4f, 0.4f, 0.8f); }
-                else { var t = UI.Label(cell.transform, "NONE", 34, Palette.Ink); UI.Place(t.rectTransform, 0.5f, 0.5f, 0, 10, 160, 50); }
-                if (!own) { var lt = UI.Label(cell.transform, "Lv " + Economy.RingLevel[i - 1], 26, Palette.InkSoft); UI.Place(lt.rectTransform, 0.5f, 0, 0, 22, 160, 34); }
-                if (d.ring == i) cell.color = new Color(1f, 0.93f, 0.55f);
-                UI.Click(cell, () => { if (idx > 0 && !SaveSystem.Data.ringOwned[idx - 1]) { Toast("Not unlocked yet", Palette.Yellow); return; } SaveSystem.Data.ring = idx; Progress.Notify(); ShowTab(Tab.Profile); });
-            }
-            y += 10;
-
-            // ---- board themes ----
-            Section(content, ref y, "BOARD THEME");
-            var th = RowAt(content, ref y, 300);
-            for (int i = 0; i < 4; i++)
-            {
-                int idx = i; bool own = d.themeOwned[i];
-                var cell = UI.Node(th, "Th" + i); UI.Place(cell, 0, 0.5f, 125 + i * 250, 0, 230, 290);
-                var bg = UI.Img(cell, "bg_" + ThemeKey(i), "Bg", true); bg.preserveAspect = false; bg.type = Image.Type.Simple;
-                UI.Stretch(bg.rectTransform, 0, 60, 0, 0);
-                var fm = UI.Img(cell, "frame_" + ThemeKey(i), "Frame"); UI.Stretch(fm.rectTransform, -10, 50, -10, -10);
-                if (!own) bg.color = new Color(0.3f, 0.3f, 0.35f, 1f);
-                var nm = UI.Label(cell, own ? Economy.ThemeNames[i] : "Lv " + Economy.ThemeLevel[i], 32, d.theme == i ? Palette.Yellow : Color.white, TextAnchor.MiddleCenter, true);
-                UI.Place(nm.rectTransform, 0.5f, 0, 0, 24, 220, 44);
-                if (!own) { var lk = UI.Icon(cell, "lock", 70, "L"); UI.Place(lk.rectTransform, 0.5f, 0.5f, 0, 30, 70, 70); }
-                UI.Click(bg, () => { if (!SaveSystem.Data.themeOwned[idx]) { Toast($"Reach level {Economy.ThemeLevel[idx]}", Palette.Yellow); return; } SaveSystem.Data.theme = idx; Progress.Notify(); ShowTab(Tab.Profile); });
-            }
-            y += 10;
-
             // ---- selection effects ----
             Section(content, ref y, "WORD EFFECT");
             var ef = RowAt(content, ref y, 130);
@@ -144,6 +110,9 @@ namespace WordQuest
                 }, 30);
                 UI.Place((RectTransform)btn.transform, 0, 0.5f, 100 + i * 200, 0, 190, 100);
             }
+            var lab = RowAt(content, ref y, 130);
+            var labBtn = UI.Pill(lab, "btn_purple", "TEST EFFECTS & SOUNDS", 720, 100, ShowEffectsLab, 38);
+            UI.Place((RectTransform)labBtn.transform, 0.5f, 0.5f, 0, 0, 720, 100);
             EndScroll(content, y);
         }
 

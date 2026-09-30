@@ -27,6 +27,8 @@ namespace WordQuest
         public float LastFoundTime;
         public Button SkipButton;
         public Image CurrentPill; public Text CurrentText;
+        public RectTransform TutLayer; public TutorialState Tut;
+        public readonly List<Image> PowerLocks = new List<Image>();
         public string Msg, PillText; public Color PillColor; public bool Dragging;
     }
 
@@ -44,11 +46,7 @@ namespace WordQuest
             foreach (Transform c in gameLayer) Destroy(c.gameObject);
             SetBackground(SaveSystem.Data.theme);
             BuildGame();
-            if (!SaveSystem.Data.tutorialDone)
-            {
-                SaveSystem.Data.tutorialDone = true; SaveSystem.Save();
-                SetSlotMessage("Swipe across the letters to find the words!", false);
-            }
+            BeginTutorials();
         }
 
         void EndGame()
@@ -191,6 +189,7 @@ namespace WordQuest
 
             // --- power-ups ---
             BuildPowerBar(root, powerH);
+            g.TutLayer = UI.Stretch(UI.Node(root, "Tutorial"));
             UpdateProgress(false);
         }
 
@@ -253,7 +252,6 @@ namespace WordQuest
             var g = game; var d = SaveSystem.Data;
             var bar = UI.Node(root, "PowerBar");
             UI.Place(bar, 0.5f, 0, 0, h / 2 - 20, 1040, h);
-            var bg = UI.Sliced(bar, "navbar", h - 40, "Bg"); UI.Stretch(bg.rectTransform, 0, 20, 0, 20);
             for (int i = 0; i < 5; i++)
             {
                 int idx = i; var pu = PowerUps.All[i];
@@ -265,7 +263,8 @@ namespace WordQuest
                 var badge = UI.Icon(cell, "spark_glow", 42, "Badge"); badge.color = Palette.Red; UI.Place(badge.rectTransform, 0.5f, 0.5f, 44, 52, 42, 42);
                 var cnt = UI.Label(badge.transform, "", 26, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(cnt.rectTransform);
                 g.PowerCounts.Add(cnt);
-                var price = UI.Label(cell, PowerUps.Names[i].ToUpper(), 20, Color.white, TextAnchor.MiddleCenter, false);
+                var lk = UI.Icon(cell, "lock", 46, "Lock"); UI.Place(lk.rectTransform, 0.5f, 0.5f, 34, -6, 46, 46); g.PowerLocks.Add(lk);
+                var price = UI.Label(cell, PowerUps.Names[i].ToUpper(), 21, Color.white, TextAnchor.MiddleCenter, true);
                 UI.Place(price.rectTransform, 0.5f, 0.5f, 0, -58, 200, 26);
                 price.horizontalOverflow = HorizontalWrapMode.Wrap;
             }
@@ -277,10 +276,13 @@ namespace WordQuest
             var g = game; if (g == null) return; var d = SaveSystem.Data;
             for (int i = 0; i < 5; i++)
             {
-                int n = d.powers[i];
+                int n = d.powers[i]; bool open = d.powerUnlocked[i] || (g.Tut != null && g.Tut.Kind == 2 && g.Tut.Power == i);
                 g.PowerCounts[i].text = n > 0 ? n.ToString() : "+";
-                g.PowerCounts[i].transform.parent.GetComponent<Image>().color = n > 0 ? Palette.Red : Palette.Green;
-                g.PowerIcons[i].color = n > 0 ? Color.white : new Color(1, 1, 1, 0.65f);
+                var badge = g.PowerCounts[i].transform.parent.GetComponent<Image>();
+                badge.color = n > 0 ? Palette.Red : Palette.Green;
+                badge.gameObject.SetActive(open);
+                g.PowerLocks[i].gameObject.SetActive(!open);
+                g.PowerIcons[i].color = !open ? new Color(0.35f, 0.35f, 0.4f, 0.9f) : n > 0 ? Color.white : new Color(1, 1, 1, 0.65f);
             }
         }
 
@@ -303,6 +305,7 @@ namespace WordQuest
         void OnWordFound(Placement p, Vector2Int a, Vector2Int b)
         {
             var g = game; if (g == null) return;
+            TutorialWordFound();
             bool isNew = Progress.Discover(g.Puzzle.CategoryIndex, p.Word);
             g.LastFoundTime = Time.unscaledTime;
             Progress.Notify();
@@ -433,6 +436,7 @@ namespace WordQuest
             Sfx.Play(Sfx.Kind.Complete);
             Fx.Confetti(fxLayer, 1000, canvasRt.rect.height / 2 + 40, 40);
             yield return new WaitForSecondsRealtime(0.45f);
+            HoldCoins(2.6f);
             var result = Progress.CompleteLevel(g.Spec, g.Puzzle, g.MysteryFound, g.PowerupsUsed);
             ShowResult(result);
         }
@@ -442,6 +446,12 @@ namespace WordQuest
         {
             var g = game; if (g == null || g.Finished || g.Busy) return;
             var d = SaveSystem.Data;
+            bool taught = g.Tut != null && g.Tut.Kind == 2 && g.Tut.Power == (int)pu;
+            if (!d.powerUnlocked[(int)pu] && !taught)
+            {
+                Toast($"{PowerUps.Names[(int)pu]} unlocks on level {PowerUps.UnlockLevel[(int)pu]}", Palette.Yellow); Sfx.Play(Sfx.Kind.Error); return;
+            }
+            if (g.Tut != null && g.Tut.Kind == 2 && !taught) return;   // during a lesson only the taught power-up works
             if (PowerUps.Count(d, pu) <= 0) { ShowBuyPower(pu); return; }
             var remaining = g.Puzzle.AllPlacements().Where(w => !w.Found).ToList();
             var normal = remaining.Where(w => !w.IsMystery).ToList();
@@ -492,6 +502,7 @@ namespace WordQuest
             Sfx.Play(pu == PowerUp.Shuffle ? Sfx.Kind.Whoosh : Sfx.Kind.Power, 1f + (int)pu * 0.1f);
             RefreshPowerBar();
             Fx.Punch(g.PowerIcons[(int)pu].rectTransform, 0.25f, 0.35f);
+            TutorialPowerUsed(pu);
         }
 
         void ShowBuyPower(PowerUp pu)

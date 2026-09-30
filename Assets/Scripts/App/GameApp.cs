@@ -221,8 +221,28 @@ namespace WordQuest
         readonly List<CoinDisplay> coinDisplays = new List<CoinDisplay>();
 
         /// <summary>Counts every visible coin counter up or down to the real amount (DOTween).</summary>
+        float coinHoldUntil;
+
+        /// <summary>Keeps the coin counters still for a moment, so coins can fly in before the number changes.</summary>
+        public void HoldCoins(float seconds)
+        {
+            coinHoldUntil = Mathf.Max(coinHoldUntil, Time.unscaledTime + seconds);
+            DOVirtual.DelayedCall(seconds + 0.05f, RefreshCoinPills).SetUpdate(true);
+        }
+
+        /// <summary>Gives coins: they fly from `from` to the coin counter, then the counter counts up.</summary>
+        public void RewardCoins(int amount, Vector2? from = null, Action done = null)
+        {
+            int n = Mathf.Clamp(amount / 70, 5, 14);
+            float dur = 0.95f + n * 0.05f;
+            HoldCoins(dur);
+            Progress.AddCoins(amount);
+            Fx.Fly(fxLayer, from ?? Vector2.zero, CoinTarget(), "coin", n, () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.35f, 0.4f), () => done?.Invoke(), 64f, 0.95f, 0.05f);
+        }
+
         void RefreshCoinPills()
         {
+            if (Time.unscaledTime < coinHoldUntil) return;
             int to = SaveSystem.Data.coins;
             coinDisplays.RemoveAll(c => c.T == null);
             foreach (var c in coinDisplays)
@@ -264,7 +284,10 @@ namespace WordQuest
 
         public Vector2 CoinTarget()
         {
-            // anywhere near the top-right where the coin pill sits, in Fx layer coordinates
+            // the visible coin counter that is not inside a popup, in Fx layer coordinates
+            foreach (var c in coinDisplays)
+                if (c.Pill != null && c.Pill.gameObject.activeInHierarchy && !c.Pill.IsChildOf(popupLayer))
+                    return fxLayer.InverseTransformPoint(c.Pill.TransformPoint(new Vector3(-c.Pill.rect.width * 0.3f, 0, 0)));
             return new Vector2(canvasRt.rect.width / 2 - 260, canvasRt.rect.height / 2 - 130);
         }
 

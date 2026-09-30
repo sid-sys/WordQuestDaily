@@ -44,22 +44,24 @@ namespace WordQuest
             null,
         };
 
-        public Color PeekColor()
+        public static Color ColorFor(int eff, int index)
         {
-            int eff = SaveSystem.Data != null ? SaveSystem.Data.effect : 0;
             Color[] set = eff >= 0 && eff < EffectColors.Length ? EffectColors[eff] : null;
-            if (eff == 4) return Color.HSVToRGB((colorIndex * 0.13f) % 1f, 0.85f, 1f);
+            if (eff == 4) return Color.HSVToRGB((index * 0.13f) % 1f, 0.85f, 1f);
             if (set == null) set = Palette.Capsules;
-            return set[colorIndex % set.Length];
+            return set[index % set.Length];
         }
+
+        public static string ParticleFor(int eff)
+        {
+            switch (eff) { case 1: return "flame"; case 2: return "xp"; case 3: return "spark_glow"; case 4: return "conf_pink"; default: return "spark_star"; }
+        }
+
+        public Color PeekColor() => ColorFor(SaveSystem.Data != null ? SaveSystem.Data.effect : 0, colorIndex);
 
         public Color NextColor() { var c = PeekColor(); colorIndex++; return c; }
 
-        public string EffectParticle()
-        {
-            int eff = SaveSystem.Data != null ? SaveSystem.Data.effect : 0;
-            switch (eff) { case 1: return "flame"; case 2: return "xp"; case 3: return "spark_glow"; case 4: return "conf_pink"; default: return "spark_star"; }
-        }
+        public string EffectParticle() => ParticleFor(SaveSystem.Data != null ? SaveSystem.Data.effect : 0);
 
         // ---------------- build ----------------
         public void Build(Puzzle p, float cell)

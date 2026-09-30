@@ -30,14 +30,15 @@ made at those sizes (transparent PNG) and cut into single sprites. The backgroun
 | brand_icon | 1024x1024 | app icon | $0.034 |
 | brand_splash | 1024x1536 | splash | $0.050 |
 | brand_feature | 1536x1024 | Play Store banner | $0.050 |
-| **Total (18 images)** | | ~110 sprites | **$0.852** |
+| tutorial | 1024x1024 | pointing hand for the tutorials | $0.034 |
+| **Total (19 images)** | | ~112 sprites | **$0.886** |
 
 Packing many items into one sheet gives about 6 sprites per image. Separate images would have cost
 about $5.50 for the same sprites (110 x $0.05).
 
 ## What was actually spent
 
-`Tools/cost_log.csv` lists every call: **35 images, $1.654**.
-The extra $0.80 is 17 duplicate sheets: a first background run was believed to have stopped, but it kept
+`Tools/cost_log.csv` lists every call: **36 images, $1.688**.
+The extra $0.80 is 17 duplicate sheets (made in the first run, before the tutorial hand was added): a first background run was believed to have stopped, but it kept
 running next to the second one, so every sheet was made twice. `gen_art.py` now skips sheets that already
 exist unless `--force` is given, so this cannot happen again.

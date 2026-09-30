@@ -94,10 +94,9 @@ namespace WordQuest
                     Ads.ShowRewarded(AdPlacement.DoubleReward, ok =>
                     {
                         if (!ok) { if (dbl != null) dbl.interactable = true; Toast("No ad ready. Try again soon.", Palette.Red); return; }
-                        Progress.AddCoins(r.Coins); Sfx.Play(Sfx.Kind.Coin);
+                        RewardCoins(r.Coins, new Vector2(0, 200));
                         if (dbl != null) dbl.gameObject.SetActive(false);
                         Fx.CountUp(coinT, r.Coins, r.Coins * 2, "+{0}", 0.6f);
-                        Fx.Fly(fxLayer, Vector2.zero, CoinTarget(), "coin", 8);
                     });
                 });
                 by += 96 / 2 + 18 + 80 / 2;

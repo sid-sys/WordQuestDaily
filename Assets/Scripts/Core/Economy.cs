@@ -22,6 +22,7 @@ namespace WordQuest
         public static readonly int[] Cost = { 150, 200, 250, 350, 500 };
         public static readonly int[] Max = { 5, 5, 3, 3, 2 };
         public static readonly int[] FreeEvery = { 5, 10, 15, 20, 25 };   // completed levels per free power-up
+        public static readonly int[] UnlockLevel = { 3, 1, 7, 12, 18 };   // level whose tutorial unlocks each power-up
         public static readonly string[] Art = { "pu_shuffle", "pu_hint", "pu_letter", "pu_finder", "pu_word" };
         public static readonly PowerUp[] All = { PowerUp.Shuffle, PowerUp.Hint, PowerUp.Letter, PowerUp.Finder, PowerUp.Word };
 

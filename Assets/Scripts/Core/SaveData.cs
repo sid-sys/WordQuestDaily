@@ -67,6 +67,9 @@ namespace WordQuest
         // settings
         public bool sound = true, haptics = true;
         public bool tutorialDone;
+        public bool swipeTutorialDone;
+        public bool[] powerUnlocked = new bool[5];   // a power-up stays locked until its tutorial is done
+        public int sfxStyle;                          // 0 classic, 1 soft, 2 bright
         public string installDate = "";
     }
 
@@ -90,6 +93,8 @@ namespace WordQuest
         {
             if (d.stars == null || d.stars.Length < Levels.Total + 1) { var n = new int[Levels.Total + 1]; if (d.stars != null) Array.Copy(d.stars, n, Mathf.Min(d.stars.Length, n.Length)); d.stars = n; }
             if (d.powers == null || d.powers.Length < 5) { var n = new[] { 0, 0, 0, 0, 0 }; if (d.powers != null) Array.Copy(d.powers, n, Mathf.Min(d.powers.Length, 5)); d.powers = n; }
+            if (d.powerUnlocked == null || d.powerUnlocked.Length < 5) d.powerUnlocked = new bool[5];
+            d.ring = 0; d.theme = 0;                      // frames and board themes were removed
             if (d.avatarOwned == null || d.avatarOwned.Length < 12) d.avatarOwned = new bool[12];
             if (d.themeOwned == null || d.themeOwned.Length < 4) d.themeOwned = new[] { true, false, false, false };
             if (d.effectOwned == null || d.effectOwned.Length < 5) d.effectOwned = new[] { true, false, false, false, false };
