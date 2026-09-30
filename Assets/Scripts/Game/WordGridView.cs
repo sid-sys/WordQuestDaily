@@ -32,26 +32,28 @@ namespace WordQuest
         readonly Dictionary<GameObject, int> capsuleOf = new Dictionary<GameObject, int>();
         readonly HashSet<int> lockedCells = new HashSet<int>();
         readonly List<GameObject> marks = new List<GameObject>();
-        int colorIndex;
+        int colorIndex; Color liveColor = Color.white;
 
         // effect palettes
         static readonly Color[][] EffectColors =
         {
-            null, // rainbow set
-            new Color[] { new Color32(0xFF, 0x5A, 0x1F, 255), new Color32(0xFF, 0x8A, 0x1C, 255), new Color32(0xFF, 0xB8, 0x1C, 255), new Color32(0xF0, 0x3E, 0x3E, 255) },
-            new Color[] { new Color32(0xFF, 0xD1, 0x2E, 255), new Color32(0x3D, 0x8B, 0xFF, 255), new Color32(0x8E, 0x5B, 0xE8, 255), new Color32(0x2F, 0xC4, 0xC9, 255) },
-            new Color[] { new Color32(0xFF, 0x9E, 0xC7, 255), new Color32(0x9E, 0xE0, 0xFF, 255), new Color32(0xFF, 0xE0, 0x8A, 255), new Color32(0xB9, 0xA0, 0xFF, 255) },
+            null, // bright rainbow set
+            new Color[] { new Color32(0xFF, 0x4A, 0x0F, 255), new Color32(0xFF, 0x8A, 0x00, 255), new Color32(0xFF, 0xC4, 0x00, 255), new Color32(0xE8, 0x1E, 0x3C, 255) },
+            new Color[] { new Color32(0xFF, 0xD0, 0x00, 255), new Color32(0x1E, 0x90, 0xFF, 255), new Color32(0x8B, 0x3D, 0xFF, 255), new Color32(0x12, 0xC8, 0xE6, 255) },
+            new Color[] { new Color32(0xFF, 0x7A, 0xB8, 255), new Color32(0x45, 0xC8, 0xFF, 255), new Color32(0xFF, 0xC8, 0x3D, 255), new Color32(0xA3, 0x7B, 0xFF, 255) },
             null,
         };
 
-        public Color NextColor()
+        public Color PeekColor()
         {
             int eff = SaveSystem.Data != null ? SaveSystem.Data.effect : 0;
             Color[] set = eff >= 0 && eff < EffectColors.Length ? EffectColors[eff] : null;
-            if (eff == 4) return Color.HSVToRGB((colorIndex++ * 0.13f) % 1f, 0.62f, 1f);
+            if (eff == 4) return Color.HSVToRGB((colorIndex * 0.13f) % 1f, 0.85f, 1f);
             if (set == null) set = Palette.Capsules;
-            return set[colorIndex++ % set.Length];
+            return set[colorIndex % set.Length];
         }
+
+        public Color NextColor() { var c = PeekColor(); colorIndex++; return c; }
 
         public string EffectParticle()
         {
@@ -89,8 +91,7 @@ namespace WordQuest
 
         Image MakeCapsule(Transform parent, Color c, string name)
         {
-            var img = UI.Sliced(parent, "btn_white", Cell * 0.8f, name);
-            img.color = new Color(c.r, c.g, c.b, c.a * 0.82f);
+            var img = UI.FlatPill(parent, new Color(c.r, c.g, c.b, 0.92f), name);
             var r = img.rectTransform; r.anchorMin = r.anchorMax = new Vector2(0, 1);
             return img;
         }
@@ -104,8 +105,6 @@ namespace WordQuest
             r.sizeDelta = new Vector2(len * grow, Cell * 0.8f);
             float ang = Mathf.Atan2(pb.y - pa.y, pb.x - pa.x) * Mathf.Rad2Deg;
             r.localRotation = Quaternion.Euler(0, 0, ang);
-            var img = r.GetComponent<Image>();
-            if (img != null && img.sprite != null) img.pixelsPerUnitMultiplier = Mathf.Max(0.1f, img.sprite.rect.height / (Cell * 0.8f));
         }
 
         // ---------------- input ----------------
@@ -126,7 +125,7 @@ namespace WordQuest
             if (!CellAt(e, out var c, out _)) return;
             dragging = true; start = end = c; lastLen = 1;
             live.gameObject.SetActive(true);
-            live.color = new Color(1f, 0.85f, 0.25f, 0.95f);
+            liveColor = PeekColor(); live.color = new Color(liveColor.r, liveColor.g, liveColor.b, 0.92f);
             UpdateLive();
             Sfx.Tick(0);
             Pop(c.x, c.y);
@@ -205,7 +204,7 @@ namespace WordQuest
         {
             PlaceCapsule(live.rectTransform, start, end); live.rectTransform.localScale = Vector3.one;
             var cells = Path(start, end);
-            OnSelection?.Invoke(new string(cells.Select(c => Puzzle.At(c.x, c.y)).ToArray()), live.color);
+            OnSelection?.Invoke(new string(cells.Select(c => Puzzle.At(c.x, c.y)).ToArray()), new Color(liveColor.r, liveColor.g, liveColor.b, 1f));
         }
 
         void Pop(int x, int y)
@@ -232,7 +231,7 @@ namespace WordQuest
             if (match.Word != s) { var t = a; a = b; b = t; }
             match.X = a.x; match.Y = a.y; match.Dir = new Vector2Int(Math.Sign(b.x - a.x), Math.Sign(b.y - a.y));
             if (cells.Count == 1) match.Dir = new Vector2Int(1, 0);
-            Color color = match.IsMystery ? (Color)new Color32(0xFF, 0xC8, 0x2E, 255) : NextColor();
+            Color color = match.IsMystery ? (Color)new Color32(0xF5, 0xC4, 0x00, 255) : NextColor();
             LockWord(match, color, true);
             live.gameObject.SetActive(false);
             OnWordFound?.Invoke(match, a, b);
@@ -247,7 +246,7 @@ namespace WordQuest
             {
                 if (r == null) return;
                 r.localScale = new Vector3(Mathf.Lerp(1f, 0.15f, t), Mathf.Lerp(1f, 0.6f, t), 1);
-                img.color = new Color(1f, 0.85f, 0.25f, 0.95f * (1 - t));
+                img.color = new Color(liveColor.r, liveColor.g, liveColor.b, 0.92f * (1 - t));
             }, () => { if (img != null) img.gameObject.SetActive(false); });
         }
 
@@ -263,6 +262,7 @@ namespace WordQuest
             foreach (var c in path)
             {
                 lockedCells.Add(c.y * cols + c.x);
+                letters[c.y * cols + c.x].color = Color.white;
             }
             if (animate)
             {
@@ -310,7 +310,7 @@ namespace WordQuest
         public void MarkWord(Placement p, Color color)
         {
             var cap = MakeCapsule(markLayer, color, "Finder_" + p.Word);
-            cap.color = new Color(color.r, color.g, color.b, 0.55f);
+            cap.color = new Color(color.r, color.g, color.b, 0.6f);
             PlaceCapsule(cap.rectTransform, new Vector2Int(p.X, p.Y), p.End);
             cap.gameObject.AddComponent<Pulse>().Amount = 0.05f;
             marks.Add(cap.gameObject);

@@ -15,7 +15,7 @@ namespace WordQuest
             var p = OpenPopup(daily ? "TODAY'S RANKING" : League.Tiers[d.leagueTier].ToUpper() + " LEAGUE", 980, 1560, true, daily ? "ribbon_pink" : "ribbon_green");
             var sub = UI.Label(p.Content, daily ? "Everybody plays the same puzzle" : $"{7 - League.DaysIntoWeek} days left  -  Top 3 move up, bottom 5 move down", 30, Palette.InkSoft);
             UI.Place(sub.rectTransform, 0.5f, 1, 0, -40, 880, 44);
-            var tabs = UI.Node(p.Content, "Tabs");
+            var tabs = UI.Stretch(UI.Node(p.Content, "Tabs"));
             var t1 = UI.Pill(tabs, daily ? "btn_grey" : "btn_green", "THIS WEEK", 380, 80, () => { p.Close(); ShowLeague(false); }, 34);
             var t2 = UI.Pill(tabs, daily ? "btn_green" : "btn_grey", "TODAY", 380, 80, () => { p.Close(); ShowLeague(true); }, 34);
             UI.Place((RectTransform)t1.transform, 0.5f, 1, -200, -120, 380, 80);

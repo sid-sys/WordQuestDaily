@@ -1,62 +1,62 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace WordQuest
 {
-    /// <summary>Small animation helpers (tweens, particle bursts, flying coins, floating text). No plugins needed.</summary>
+    /// <summary>Animation helpers built on DOTween (pop-ins, punches, fades, counters, flying coins) plus a tiny particle system.</summary>
     public class Fx : MonoBehaviour
     {
         public static Fx I;
-        void Awake() { I = this; }
+        void Awake()
+        {
+            I = this;
+            DOTween.Init(false, true, LogBehaviour.ErrorsOnly);
+            DOTween.SetTweensCapacity(800, 100);
+        }
 
-        // ---------- tweens ----------
+        // ---------- easing (kept for callers that build their own curves) ----------
         public static float OutCubic(float t) { t = 1 - Mathf.Clamp01(t); return 1 - t * t * t; }
         public static float InOut(float t) { t = Mathf.Clamp01(t); return t * t * (3 - 2 * t); }
         public static float OutBack(float t) { t = Mathf.Clamp01(t); float c = 1.70158f; return 1 + (c + 1) * Mathf.Pow(t - 1, 3) + c * Mathf.Pow(t - 1, 2); }
 
         public static Coroutine Run(IEnumerator e) => I != null ? I.StartCoroutine(e) : null;
-        public static void Stop(Coroutine c) { if (I != null && c != null) I.StopCoroutine(c); }
 
-        public static Coroutine Tween(float dur, Action<float> step, Action done = null, float delay = 0f)
+        /// <summary>Runs `step(0..1)` over `dur` seconds (real time). Optional delay and completion callback.</summary>
+        public static Tween Tween(float dur, Action<float> step, Action done = null, float delay = 0f)
         {
-            return Run(TweenRoutine(dur, step, done, delay));
-        }
-
-        static IEnumerator TweenRoutine(float dur, Action<float> step, Action done, float delay)
-        {
-            if (delay > 0) yield return new WaitForSecondsRealtime(delay);
-            float t = 0;
-            while (t < dur)
-            {
-                t += Mathf.Min(Time.unscaledDeltaTime, 0.05f);
-                step(Mathf.Clamp01(t / dur));
-                yield return null;
-            }
-            step(1f);
-            done?.Invoke();
+            var t = DOVirtual.Float(0f, 1f, Mathf.Max(0.001f, dur), v => step(v)).SetDelay(delay).SetUpdate(true).SetEase(Ease.Linear);
+            if (done != null) t.OnComplete(() => done());
+            return t;
         }
 
         public static void PopIn(RectTransform rt, float dur = 0.35f, float delay = 0f)
         {
             if (rt == null) return;
             rt.localScale = Vector3.zero;
-            Tween(dur, t => { if (rt != null) rt.localScale = Vector3.one * OutBack(t); }, null, delay);
+            rt.DOScale(1f, dur).SetDelay(delay).SetEase(Ease.OutBack).SetUpdate(true).SetLink(rt.gameObject);
         }
 
         public static void Punch(RectTransform rt, float amount = 0.18f, float dur = 0.3f)
         {
             if (rt == null) return;
-            Vector3 b = rt.localScale;
-            Tween(dur, t => { if (rt != null) rt.localScale = b * (1 + amount * Mathf.Sin(t * Mathf.PI)); }, () => { if (rt != null) rt.localScale = b; });
+            rt.DOKill(true);
+            rt.DOPunchScale(Vector3.one * amount, dur, 1, 0.5f).SetUpdate(true).SetLink(rt.gameObject);
         }
 
         public static void Fade(CanvasGroup g, float to, float dur = 0.25f, Action done = null)
         {
-            float from = g.alpha;
-            Tween(dur, t => { if (g != null) g.alpha = Mathf.Lerp(from, to, t); }, done);
+            var t = g.DOFade(to, dur).SetUpdate(true).SetLink(g.gameObject);
+            if (done != null) t.OnComplete(() => done());
+        }
+
+        /// <summary>Counts a number text from `from` to `to`.</summary>
+        public static Tween CountUp(Text label, int from, int to, string format = "{0}", float dur = 0.8f)
+        {
+            return DOVirtual.Int(from, to, dur, v => { if (label != null) label.text = string.Format(format, v); }).SetEase(Ease.OutCubic).SetUpdate(true).SetLink(label.gameObject);
         }
 
         // ---------- particles ----------
@@ -83,11 +83,10 @@ namespace WordQuest
         public static void Burst(Transform layer, Vector2 pos, string sprite, Color color, int count, float speed = 420f, float life = 0.7f, float size = 46f, float gravity = 500f)
         {
             if (I == null || layer == null) return;
-            var sp = Art.Get(sprite);
             for (int i = 0; i < count; i++)
             {
                 var img = UI.Icon(layer, sprite, size * UnityEngine.Random.Range(0.6f, 1.2f), "P");
-                img.color = color; img.sprite = sp;
+                img.color = color;
                 var rt = img.rectTransform; rt.anchoredPosition = pos;
                 float a = UnityEngine.Random.Range(0f, Mathf.PI * 2), s = speed * UnityEngine.Random.Range(0.35f, 1f);
                 I.ps.Add(new P { rt = rt, img = img, vel = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * s, life = life * UnityEngine.Random.Range(0.7f, 1.2f), gravity = gravity, spin = UnityEngine.Random.Range(-240f, 240f), startScale = 1f, color = color });
@@ -108,45 +107,40 @@ namespace WordQuest
             }
         }
 
-        /// <summary>Small icons fly from one point to another in a curve, then `onArrive` is called once per icon.</summary>
+        /// <summary>Small icons fly from one point to another along a curve; `onEach` fires per icon, `onAll` at the end.</summary>
         public static void Fly(Transform layer, Vector2 from, Vector2 to, string sprite, int count, Action onEach = null, Action onAll = null, float size = 64f, float duration = 0.9f, float stagger = 0.06f)
         {
-            if (I == null) { onAll?.Invoke(); return; }
+            if (I == null || count <= 0) { onAll?.Invoke(); return; }
             int left = count;
             for (int i = 0; i < count; i++)
             {
                 var img = UI.Icon(layer, sprite, size, "Fly");
-                var rt = img.rectTransform; rt.anchoredPosition = from;
+                var rt = img.rectTransform; rt.anchoredPosition = from; rt.localScale = Vector3.zero;
                 Vector2 mid = (from + to) / 2 + new Vector2(UnityEngine.Random.Range(-260f, 260f), UnityEngine.Random.Range(60f, 320f));
-                Tween(duration, t =>
+                DOVirtual.Float(0f, 1f, duration, t =>
                 {
                     if (rt == null) return;
-                    float e = InOut(t);
-                    Vector2 a = Vector2.Lerp(from, mid, e), b = Vector2.Lerp(mid, to, e);
-                    rt.anchoredPosition = Vector2.Lerp(a, b, e);
+                    Vector2 a = Vector2.Lerp(from, mid, t), b = Vector2.Lerp(mid, to, t);
+                    rt.anchoredPosition = Vector2.Lerp(a, b, t);
                     rt.localScale = Vector3.one * (t < 0.2f ? OutBack(t / 0.2f) : Mathf.Lerp(1f, 0.7f, t));
-                }, () =>
+                }).SetDelay(i * stagger).SetEase(Ease.InOutSine).SetUpdate(true).SetLink(rt.gameObject).OnComplete(() =>
                 {
                     if (rt != null) Destroy(rt.gameObject);
                     onEach?.Invoke();
                     if (--left == 0) onAll?.Invoke();
-                }, i * stagger);
+                });
             }
-            if (count == 0) onAll?.Invoke();
         }
 
         public static void FloatText(Transform layer, Vector2 pos, string text, Color color, int size = 56)
         {
             var t = UI.Label(layer, text, size, color, TextAnchor.MiddleCenter, true);
-            var rt = t.rectTransform; rt.anchoredPosition = pos; rt.sizeDelta = new Vector2(500, 90);
-            Tween(0.9f, k => { if (rt == null) return; rt.anchoredPosition = pos + new Vector2(0, 110 * OutCubic(k)); var c = t.color; c.a = 1 - Mathf.Clamp01((k - 0.6f) / 0.4f); t.color = c; rt.localScale = Vector3.one * (1 + 0.25f * Mathf.Sin(k * Mathf.PI)); },
-                () => { if (rt != null) Destroy(rt.gameObject); });
-        }
-
-        /// <summary>Counts a number text from `from` to `to`.</summary>
-        public static void CountUp(Text label, int from, int to, string format = "{0}", float dur = 0.8f)
-        {
-            Tween(dur, t => { if (label != null) label.text = string.Format(format, Mathf.RoundToInt(Mathf.Lerp(from, to, OutCubic(t)))); });
+            var rt = t.rectTransform; rt.anchoredPosition = pos; rt.sizeDelta = new Vector2(500, 90); rt.localScale = Vector3.zero;
+            var seq = DOTween.Sequence().SetUpdate(true).SetLink(rt.gameObject);
+            seq.Append(rt.DOScale(1f, 0.25f).SetEase(Ease.OutBack));
+            seq.Join(rt.DOAnchorPosY(pos.y + 110, 0.9f).SetEase(Ease.OutCubic));
+            seq.Insert(0.55f, t.DOFade(0f, 0.35f));
+            seq.OnComplete(() => { if (rt != null) Destroy(rt.gameObject); });
         }
     }
 }

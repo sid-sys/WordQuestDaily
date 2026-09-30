@@ -101,7 +101,7 @@ namespace WordQuest
                 btn.onClick.AddListener(() =>
                 {
                     set(!get()); SaveSystem.Save(); Sfx.Play(Sfx.Kind.Click);
-                    btn.GetComponent<Image>().sprite = Art.Get(get() ? "btn_green" : "btn_grey");
+                    UI.ApplyStyle(btn.GetComponent<Image>(), get() ? "btn_green" : "btn_grey", 90);
                     UI.ButtonLabel(btn).text = get() ? "ON" : "OFF";
                 });
                 var ic = UI.Icon(row, label == "Sound" ? "sound_on" : "bell", 100, "Ic");
@@ -162,16 +162,16 @@ namespace WordQuest
                 if (current) tile.color = new Color(1f, 0.93f, 0.55f);
                 if (done) tile.color = new Color(0.8f, 0.95f, 0.8f);
                 UI.Place(tile.rectTransform, 0.5f, 1, x, -150 - row * (th + gy) - th / 2, tw, th);
-                var head = UI.Label(tile.transform, "DAY " + (i + 1), 32, Palette.Ink);
-                UI.Place(head.rectTransform, 0.5f, 1, 0, -34, 200, 40);
+                var head = UI.Label(tile.transform, "DAY " + (i + 1), 28, Palette.Ink);
+                UI.Place(head.rectTransform, 0.5f, 1, 0, -44, 120, 36);
                 var r = Economy.Daily[i];
                 string art = r.Power >= 0 && r.Coins == 0 ? PowerUps.Art[r.Power] : i == 6 ? "chest" : r.Coins >= 250 ? "coin_bag" : r.Coins >= 150 ? "coin_stack" : "coin";
-                var ic = UI.Icon(tile.transform, art, 120, "Icon");
-                UI.Place(ic.rectTransform, 0.5f, 0.5f, 0, 10, 120, 120);
-                var lab = UI.Label(tile.transform, r.Label, 26, Palette.Ink);
+                var ic = UI.Icon(tile.transform, art, 108, "Icon");
+                UI.Place(ic.rectTransform, 0.5f, 1, 0, -146, 108, 108);
+                var lab = UI.Label(tile.transform, r.Label, 24, Palette.Ink);
                 lab.horizontalOverflow = HorizontalWrapMode.Wrap;
-                UI.Place(lab.rectTransform, 0.5f, 0, 0, 44, 196, 70);
-                if (done) { var ck = UI.Icon(tile.transform, "check", 70, "Done"); UI.Place(ck.rectTransform, 1, 1, -30, -30, 70, 70); }
+                UI.Place(lab.rectTransform, 0.5f, 1, 0, -236, 176, 60);
+                if (done) { var ck = UI.Icon(tile.transform, "check", 42, "Done"); UI.Place(ck.rectTransform, 1, 1, -34, -40, 42, 42); }
                 if (current) { tiles.Add(tile.rectTransform); tile.rectTransform.localScale = Vector3.one; }
             }
             var claim = UI.Pill(p.Content, can ? "btn_green" : "btn_grey", can ? "CLAIM" : "COME BACK TOMORROW", 620, 120, null, can ? 56 : 38);

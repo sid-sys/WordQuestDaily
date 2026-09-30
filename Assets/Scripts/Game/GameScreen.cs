@@ -26,8 +26,8 @@ namespace WordQuest
         public bool MysteryFound, MysterySkipped, Finished, Busy;
         public float LastFoundTime;
         public Button SkipButton;
-        public Image HintBulb;
         public Image CurrentPill; public Text CurrentText;
+        public string Msg, PillText; public Color PillColor; public bool Dragging;
     }
 
     public partial class GameApp
@@ -47,7 +47,7 @@ namespace WordQuest
             if (!SaveSystem.Data.tutorialDone)
             {
                 SaveSystem.Data.tutorialDone = true; SaveSystem.Save();
-                Toast("Swipe across letters to find the words!", Palette.Yellow);
+                SetSlotMessage("Swipe across the letters to find the words!", false);
             }
         }
 
@@ -76,6 +76,39 @@ namespace WordQuest
             ShowTab(tab);
         }
 
+        // =============== pause menu ===============
+        void ShowPause()
+        {
+            var g = game; if (g == null || g.Finished) return;
+            var p = OpenPopup("PAUSED", 820, 720, true);
+            void Btn(string art, string text, int i, Action a)
+            {
+                var b = UI.Pill(p.Content, art, text, 520, 112, a, 48);
+                UI.Place((RectTransform)b.transform, 0.5f, 1, 0, -(76 + i * 144), 520, 112);
+            }
+            Btn("btn_green", "CONTINUE", 0, p.Close);
+            Btn("btn_yellow", "RESTART", 1, () => { var spec = g.Spec; CloseAllPopups(); StartGame(spec); });
+            Btn("btn_blue", "HOME", 2, () => { CloseAllPopups(); EndGame(); ShowTab(Tab.Home); });
+        }
+
+        /// <summary>Round pause button drawn in code (two bars).</summary>
+        RectTransform MakePauseButton(Transform parent, float size, Action onClick)
+        {
+            var root = UI.Node(parent, "Pause");
+            root.sizeDelta = new Vector2(size, size);
+            var rim = UI.Node(root, "Rim").gameObject.AddComponent<Image>(); rim.sprite = Shapes.Circle(); rim.color = new Color32(0x1B, 0x5F, 0xA8, 255); UI.Stretch(rim.rectTransform); rim.raycastTarget = true;
+            var face = UI.Node(root, "Face").gameObject.AddComponent<Image>(); face.sprite = Shapes.Circle(); face.color = Palette.Blue; UI.Stretch(face.rectTransform, size * 0.06f, size * 0.06f, size * 0.06f, size * 0.06f); face.raycastTarget = false;
+            var gloss = UI.Node(root, "Gloss").gameObject.AddComponent<Image>(); gloss.sprite = Shapes.Circle(); gloss.color = new Color(1, 1, 1, 0.18f); gloss.raycastTarget = false;
+            UI.Place(gloss.rectTransform, 0.5f, 0.5f, 0, size * 0.14f, size * 0.62f, size * 0.36f);
+            for (int i = 0; i < 2; i++)
+            {
+                var bar = UI.Round(root, Color.white, 6, "Bar" + i);
+                UI.Place(bar.rectTransform, 0.5f, 0.5f, (i == 0 ? -1 : 1) * size * 0.14f, 0, size * 0.15f, size * 0.42f);
+            }
+            UI.Click(rim, onClick);
+            return root;
+        }
+
         // =============== layout ===============
         void BuildGame()
         {
@@ -84,16 +117,16 @@ namespace WordQuest
             var root = g.Root;
             float rootH = safe.rect.height;
 
-            // --- top bar: back, title, hint bulb ---
-            var back = UI.Icon(root, "rb_back", 96, "Back"); UI.Place(back.rectTransform, 0, 1, 70, -66, 96, 96);
-            UI.Click(back, () => LeaveGame(true));
-            var title = UI.Label(root, spec.Title, 64, Color.white, TextAnchor.MiddleCenter, true);
-            UI.Place(title.rectTransform, 0.5f, 1, 0, -46, 560, 80);
+            // --- top bar: pause, title, coins ---
+            MakePauseButton(root, 92, ShowPause);
+            UI.Place((RectTransform)root.Find("Pause"), 0, 1, 70, -62, 92, 92);
+            var title = UI.Label(root, spec.Title, 60, Color.white, TextAnchor.MiddleCenter, true);
+            UI.Place(title.rectTransform, 0.5f, 1, 0, -44, 440, 76);
             var cat = WordBank.Get(puzzle.CategoryIndex);
-            var catLabel = UI.Label(root, $"{cat.Name.ToUpper()}  -  {Levels.DiffName(spec.Diff).ToUpper()}", 30, Color.white, TextAnchor.MiddleCenter, true);
-            UI.Place(catLabel.rectTransform, 0.5f, 1, 0, -102, 700, 40);
-            g.HintBulb = UI.Icon(root, "rb_bulb", 96, "Bulb"); UI.Place(g.HintBulb.rectTransform, 1, 1, -70, -66, 96, 96);
-            UI.Click(g.HintBulb, () => UsePower(PowerUp.Hint));
+            var catLabel = UI.Label(root, cat.Name.ToUpper(), 30, Color.white, TextAnchor.MiddleCenter, true);
+            UI.Place(catLabel.rectTransform, 0.5f, 1, 0, -100, 440, 40);
+            var coins = CoinPill(root, false);
+            UI.Place(coins, 1, 1, -40 - 150, -62, 300, 84);
 
             // --- two progress bars side by side: this level, and the word collection ---
             g.LevelBar = UI.ProgressBar(root, 520, 44, Palette.Green, "LevelBar");
@@ -109,16 +142,24 @@ namespace WordQuest
             float ls = rootH > 1900 ? 1.22f : 1f;   // tall phones get a bigger word list
             float listBottom = BuildWordList(root, listTop, ls);
 
-            // --- the word being swiped (pill) ---
+            // --- the slot between the list and the board: the swiped word, or a message ---
             float pillY = listBottom + 14;
-            g.CurrentPill = UI.Sliced(root, "btn_white", 72, "Current");
-            UI.Place(g.CurrentPill.rectTransform, 0.5f, 1, 0, -(pillY + 36), 300, 72);
-            g.CurrentText = UI.Label(g.CurrentPill.transform, "", 44, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.CurrentText.rectTransform, 0, 4, 0, 0);
+            g.CurrentPill = UI.Sliced(root, "btn_white", 76, "Current");
+            UI.Place(g.CurrentPill.rectTransform, 0.5f, 1, 0, -(pillY + 38), 300, 76);
+            g.CurrentText = UI.Label(g.CurrentPill.transform, "", 38, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.CurrentText.rectTransform, 0, 2, 0, 0);
             g.CurrentPill.gameObject.SetActive(false);
+            g.Banner = UI.Node(root, "Banner");
+            UI.Place(g.Banner, 0.5f, 1, 0, -(pillY + 38), 960, 76);
+            var bi = UI.Sliced(g.Banner, "btn_pink", 76, "Bg"); UI.Stretch(bi.rectTransform);
+            g.BannerText = UI.Label(g.Banner, "", 32, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.BannerText.rectTransform, 40, 2, 40, 0);
+            g.SkipButton = UI.Pill(g.Banner, "btn_grey", "SKIP", 150, 52, SkipMystery, 28);
+            UI.Place((RectTransform)g.SkipButton.transform, 1, 0.5f, -96, 0, 150, 52);
+            g.SkipButton.gameObject.SetActive(false);
+            g.Banner.gameObject.SetActive(false);
 
             // --- board: a big white card, as wide as the screen allows ---
             float powerH = 210;
-            float boardTop = pillY + 72 + 14;
+            float boardTop = pillY + 76 + 14;
             float availH = rootH - boardTop - powerH - 24, availW = 1080 - 40 - 32;
             float cell = Mathf.Min(availW / puzzle.Cols, availH / puzzle.Rows, 190f);
             float bw = cell * puzzle.Cols, bh = cell * puzzle.Rows;
@@ -138,26 +179,43 @@ namespace WordQuest
             g.Grid.OnSelection = (text, color) =>
             {
                 if (g.CurrentPill == null) return;
-                if (text == null) { g.CurrentPill.gameObject.SetActive(false); return; }
-                g.CurrentPill.gameObject.SetActive(true);
-                g.CurrentText.text = text;
-                g.CurrentPill.color = new Color(1f, 0.78f, 0.2f);
-                g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, text.Length * 38 + 100), 72);
+                g.Dragging = text != null;
+                if (text != null)
+                {
+                    g.CurrentText.text = text; g.CurrentPill.color = color;
+                    g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, text.Length * 34 + 110), 76);
+                }
+                UpdateSlot();
             };
             Fx.PopIn(boardHolder, 0.4f);
-
-            // --- banner for the mystery prompt (sits over the word list once all words are found) ---
-            g.Banner = UI.Node(root, "Banner");
-            UI.Place(g.Banner, 0.5f, 1, 0, -(listTop + 66), 1000, 120);
-            var bi = UI.Img(g.Banner, "ribbon_pink", "Bg"); bi.preserveAspect = false; UI.Stretch(bi.rectTransform);
-            g.BannerText = UI.Label(g.Banner, "", 36, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.BannerText.rectTransform, 70, 8, 270, 0);
-            g.SkipButton = UI.Pill(g.Banner, "btn_grey", "SKIP", 170, 72, SkipMystery, 34);
-            UI.Place((RectTransform)g.SkipButton.transform, 1, 0.5f, -150, 4, 170, 72);
-            g.Banner.gameObject.SetActive(false);
 
             // --- power-ups ---
             BuildPowerBar(root, powerH);
             UpdateProgress(false);
+        }
+
+        void SetSlotMessage(string msg, bool skip)
+        {
+            var g = game; if (g == null) return;
+            g.Msg = msg; g.SkipButton.gameObject.SetActive(skip && !string.IsNullOrEmpty(msg));
+            g.BannerText.GetComponent<RectTransform>().offsetMax = new Vector2(skip ? -190 : -30, 0);
+            g.BannerText.text = msg ?? "";
+            UpdateSlot();
+        }
+
+        void UpdateSlot()
+        {
+            var g = game; if (g == null || g.CurrentPill == null) return;
+            bool showMsg = !g.Dragging && !string.IsNullOrEmpty(g.Msg);
+            if (showMsg && !g.Banner.gameObject.activeSelf) Fx.PopIn((RectTransform)g.Banner, 0.3f);
+            g.Banner.gameObject.SetActive(showMsg);
+            bool showPill = g.Dragging || (!showMsg && !string.IsNullOrEmpty(g.PillText));
+            g.CurrentPill.gameObject.SetActive(showPill);
+            if (showPill && !g.Dragging)
+            {
+                g.CurrentText.text = g.PillText; g.CurrentPill.color = g.PillColor;
+                g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, g.PillText.Length * 34 + 110), 76);
+            }
         }
 
         /// <summary>Light panel with the words in columns. Returns the bottom y of the panel.</summary>
@@ -184,7 +242,7 @@ namespace WordQuest
                 string label = mystery ? new string('?', g.Puzzle.Mystery.Word.Length) : words[i];
                 var t = UI.Label(cell, label, fontSize, mystery ? Palette.Purple : Color.black, TextAnchor.MiddleCenter, false);
                 UI.Stretch(t.rectTransform);
-                if (mystery) { g.MysteryChip = cell; cell.gameObject.AddComponent<Pulse>().Amount = 0.04f; }
+                if (mystery) { g.MysteryChip = cell; }
                 else g.Chips[words[i]] = cell;
             }
             return top + h;
@@ -195,20 +253,20 @@ namespace WordQuest
             var g = game; var d = SaveSystem.Data;
             var bar = UI.Node(root, "PowerBar");
             UI.Place(bar, 0.5f, 0, 0, h / 2 - 20, 1040, h);
-            var bg = UI.Sliced(bar, "navbar", 190, "Bg"); UI.Stretch(bg.rectTransform, 0, 20, 0, 20);
+            var bg = UI.Sliced(bar, "navbar", h - 40, "Bg"); UI.Stretch(bg.rectTransform, 0, 20, 0, 20);
             for (int i = 0; i < 5; i++)
             {
                 int idx = i; var pu = PowerUps.All[i];
                 var cell = UI.Node(bar, "Pw" + i);
                 UI.Place(cell, 0, 0.5f, 104 + i * 208, 0, 200, h);
-                var icon = UI.Icon(cell, PowerUps.Art[i], 112, "Icon"); UI.Place(icon.rectTransform, 0.5f, 0.5f, 0, 24, 112, 112);
+                var icon = UI.Icon(cell, PowerUps.Art[i], 92, "Icon"); UI.Place(icon.rectTransform, 0.5f, 0.5f, 0, 22, 92, 92);
                 UI.Click(icon, () => UsePower(pu));
                 g.PowerIcons.Add(icon);
-                var badge = UI.Icon(cell, "spark_glow", 52, "Badge"); badge.color = Palette.Red; UI.Place(badge.rectTransform, 0.5f, 0.5f, 52, 76, 52, 52);
-                var cnt = UI.Label(badge.transform, "", 30, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(cnt.rectTransform);
+                var badge = UI.Icon(cell, "spark_glow", 42, "Badge"); badge.color = Palette.Red; UI.Place(badge.rectTransform, 0.5f, 0.5f, 44, 52, 42, 42);
+                var cnt = UI.Label(badge.transform, "", 26, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(cnt.rectTransform);
                 g.PowerCounts.Add(cnt);
                 var price = UI.Label(cell, PowerUps.Names[i].ToUpper(), 20, Color.white, TextAnchor.MiddleCenter, false);
-                UI.Place(price.rectTransform, 0.5f, 0, 0, 52, 200, 28);
+                UI.Place(price.rectTransform, 0.5f, 0.5f, 0, -58, 200, 26);
                 price.horizontalOverflow = HorizontalWrapMode.Wrap;
             }
             RefreshPowerBar();
@@ -262,16 +320,10 @@ namespace WordQuest
                 StartCoroutine(MysteryRoutine(p, isNew));
                 return;
             }
-            // keep the found word visible in the pill between the list and the board
-            if (g.CurrentPill != null)
-            {
-                g.CurrentPill.gameObject.SetActive(true);
-                g.CurrentText.text = p.Word;
-                var lc = grid.LastColor;
-                g.CurrentPill.color = new Color(lc.r, lc.g, lc.b, 1f);
-                g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, p.Word.Length * 38 + 100), 72);
-                Fx.Punch(g.CurrentPill.rectTransform, 0.15f, 0.3f);
-            }
+            // keep the found word visible in the slot between the list and the board
+            g.PillText = p.Word; g.PillColor = grid.LastColor;
+            UpdateSlot();
+            if (g.CurrentPill != null && g.CurrentPill.gameObject.activeSelf) Fx.Punch(g.CurrentPill.rectTransform, 0.15f, 0.3f);
             // strike the word through in the list
             if (g.Chips.TryGetValue(p.Word, out var chip))
             {
@@ -294,9 +346,7 @@ namespace WordQuest
             if (!normalDone) return;
             if (g.Puzzle.Mystery == null || g.MysteryFound || g.MysterySkipped) { StartCoroutine(FinishRoutine()); return; }
             // all listed words done: invite the player to find the mystery word
-            g.Banner.gameObject.SetActive(true);
-            g.BannerText.text = $"FIND THE MYSTERY WORD!  ({g.Puzzle.Mystery.Word.Length} letters)";
-            Fx.PopIn(g.Banner, 0.4f);
+            SetSlotMessage($"FIND THE MYSTERY WORD!  ({g.Puzzle.Mystery.Word.Length} letters)", true);
             Sfx.Play(Sfx.Kind.Mystery, 1f, 0.6f);
             if (g.MysteryChip != null) Fx.Punch(g.MysteryChip, 0.3f, 0.6f);
         }
@@ -304,7 +354,7 @@ namespace WordQuest
         void SkipMystery()
         {
             var g = game; if (g == null || g.Finished) return;
-            g.MysterySkipped = true; g.Banner.gameObject.SetActive(false);
+            g.MysterySkipped = true; SetSlotMessage(null, false);
             CheckFinish();
         }
 
@@ -313,7 +363,7 @@ namespace WordQuest
         {
             var g = game; if (g == null) yield break;
             g.Busy = true; g.Grid.InputEnabled = false;
-            g.Banner.gameObject.SetActive(false);
+            SetSlotMessage(null, false);
             Sfx.Play(Sfx.Kind.Mystery);
             // dark veil + big word
             var veil = UI.Solid(fxLayer, new Color(0.03f, 0.05f, 0.15f, 0f), "Veil");

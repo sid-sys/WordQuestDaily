@@ -67,7 +67,6 @@ namespace WordQuest
                         if (c > 0) { Sfx.Play(Sfx.Kind.Level); Toast($"+{c} coins!", Palette.Yellow); ShowTab(Tab.Profile); }
                     }, 40);
                     UI.Place((RectTransform)cb.transform, 1, 0.5f, -130, 0, 200, 84);
-                    cb.gameObject.AddComponent<Pulse>().Amount = 0.06f;
                 }
                 else if (claimed) { var ck = UI.Icon(row, "check", 76, "Done"); UI.Place(ck.rectTransform, 1, 0.5f, -80, 0, 76, 76); }
             }

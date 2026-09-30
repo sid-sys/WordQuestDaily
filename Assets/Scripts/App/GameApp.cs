@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -71,11 +72,7 @@ namespace WordQuest
         void OnApplicationQuit() { SaveSystem.Save(); }
 
         // Refresh the visible screen when coins etc. change (not while playing)
-        void OnProgressChanged()
-        {
-            if (game != null) return;
-            RefreshCoinPills();
-        }
+        void OnProgressChanged() { RefreshCoinPills(); }
 
         // =============== canvas ===============
         void BuildCanvas()
@@ -151,7 +148,7 @@ namespace WordQuest
             gameLayer.gameObject.SetActive(false);
             body.gameObject.SetActive(true); tabBar.gameObject.SetActive(true);
             foreach (Transform c in body) Destroy(c.gameObject);
-            coinPills.Clear();
+            coinDisplays.Clear();
             SetBackground(SaveSystem.Data.theme);
             switch (t)
             {
@@ -170,9 +167,10 @@ namespace WordQuest
             UI.Place(tabBar, 0.5f, 0, 0, 100, 1040, 160);
             var bar = UI.Sliced(tabBar, "navbar", 160, "Bar");
             UI.Stretch(bar.rectTransform);
-            tabGlow = UI.Sliced(tabBar, "btn_green", 120, "Glow").rectTransform;
-            tabGlow.sizeDelta = new Vector2(230, 122);
-            tabGlow.GetComponent<Image>().color = new Color(1, 1, 1, 0.9f);
+            var glow = UI.Sliced(tabBar, "btn_green", 132, "Glow");
+            tabGlow = glow.rectTransform;
+            tabGlow.anchorMin = tabGlow.anchorMax = new Vector2(0, 0.5f);
+            tabGlow.sizeDelta = new Vector2(236, 132);
             float w = 1040f / 4f;
             for (int i = 0; i < 4; i++)
             {
@@ -182,64 +180,77 @@ namespace WordQuest
                 var hit = cell.gameObject.AddComponent<Image>(); hit.color = new Color(0, 0, 0, 0);
                 UI.Click(hit, () => { if ((int)tab != idx) ShowTab((Tab)idx); });
                 cell.GetComponent<ButtonFx>().Down = 0.96f;
-                var icon = UI.Icon(cell, TabArt[i], 96, "Icon");
+                var icon = UI.Icon(cell, TabArt[i], 68, "Icon");
                 icon.raycastTarget = false;
-                UI.Place(icon.rectTransform, 0.5f, 0.5f, 0, 12, 96, 96);
-                var label = UI.Label(cell, TabNames[i].ToUpper(), 26, Color.white, TextAnchor.MiddleCenter, false);
-                UI.Place(label.rectTransform, 0.5f, 0, 0, 20, 200, 36);
+                UI.Place(icon.rectTransform, 0.5f, 0.5f, 0, 20, 68, 68);
+                var label = UI.Label(cell, TabNames[i].ToUpper(), 23, Color.white, TextAnchor.MiddleCenter, false);
+                UI.Place(label.rectTransform, 0.5f, 0.5f, 0, -42, 236, 26);
                 tabIcons.Add(icon.rectTransform); tabTexts.Add(label); tabImgs.Add(icon);
             }
             tabGlow.SetSiblingIndex(1);
-            tabBadge = UI.Icon(tabBar, "spark_glow", 34, "Badge"); tabBadge.gameObject.SetActive(false);
+            tabBadge = UI.Icon(tabBar, "spark_glow", 30, "Badge"); tabBadge.gameObject.SetActive(false);
         }
 
         void SlideTabTo(int idx, bool animate)
         {
             float w = 1040f / 4f, target = w * (idx + 0.5f);
-            float from = tabGlow.anchoredPosition.x;
-            tabGlow.anchorMin = tabGlow.anchorMax = new Vector2(0, 0.5f);
-            tabGlow.anchoredPosition = new Vector2(animate ? from : target, 0);
-            if (animate) Fx.Tween(0.28f, t => { if (tabGlow != null) tabGlow.anchoredPosition = new Vector2(Mathf.Lerp(from, target, Fx.OutBack(t)), 0); });
+            tabGlow.DOKill();
+            if (animate) tabGlow.DOAnchorPosX(target, 0.3f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(tabGlow.gameObject);
+            else tabGlow.anchoredPosition = new Vector2(target, 0);
             for (int i = 0; i < tabIcons.Count; i++)
             {
                 bool on = i == idx;
-                tabImgs[i].color = on ? Color.white : new Color(1, 1, 1, 0.6f);
-                tabTexts[i].color = on ? Palette.Yellow : new Color(1, 1, 1, 0.65f);
-                tabIcons[i].localScale = Vector3.one * (on ? 1.2f : 0.9f);
-                tabIcons[i].anchoredPosition = new Vector2(0, on ? 22 : 12);
+                tabImgs[i].color = on ? Color.white : new Color(1, 1, 1, 0.62f);
+                tabTexts[i].color = on ? Color.white : new Color(1, 1, 1, 0.62f);
             }
             // red dot on Collection or Profile when a reward is waiting
             bool dot = false; int dotTab = 2;
             for (int c = 0; c < WordBank.Count; c++) if (Progress.ClaimableStep(c) >= 0) dot = true;
             if (!dot) { dotTab = 3; dot = Progress.ReadyAchievements() > 0; }
             tabBadge.gameObject.SetActive(dot);
-            if (dot) { UI.Place(tabBadge.rectTransform, 0, 0.5f, w * (dotTab + 0.5f) + 44, 48, 30, 30); tabBadge.sprite = Art.Get("spark_glow"); tabBadge.color = Palette.Red; }
+            if (dot) { UI.Place(tabBadge.rectTransform, 0, 0.5f, w * (dotTab + 0.5f) + 40, 48, 30, 30); tabBadge.color = Palette.Red; }
         }
 
         // =============== shared HUD ===============
-        readonly List<Text> coinPills = new List<Text>();
+        class CoinDisplay { public Text T; public int Shown; public Tween Tw; public RectTransform Pill; }
+        readonly List<CoinDisplay> coinDisplays = new List<CoinDisplay>();
 
+        /// <summary>Counts every visible coin counter up or down to the real amount (DOTween).</summary>
         void RefreshCoinPills()
         {
-            foreach (var t in coinPills) if (t != null) t.text = SaveSystem.Data.coins.ToString("N0");
+            int to = SaveSystem.Data.coins;
+            coinDisplays.RemoveAll(c => c.T == null);
+            foreach (var c in coinDisplays)
+            {
+                if (c.Shown == to) continue;
+                int from = c.Shown; bool up = to > from;
+                c.Tw?.Kill();
+                float dur = Mathf.Clamp(Mathf.Abs(to - from) / 500f, 0.4f, 1.3f);
+                var t = c.T;
+                c.Tw = DOVirtual.Int(from, to, dur, v => { c.Shown = v; if (t != null) t.text = v.ToString("N0"); }).SetEase(Ease.OutCubic).SetUpdate(true).SetLink(t.gameObject);
+                c.Tw.OnComplete(() => { c.Shown = to; });
+                t.DOKill();
+                t.color = up ? new Color(0.55f, 1f, 0.6f) : new Color(1f, 0.55f, 0.5f);
+                t.DOColor(Color.white, 1.0f).SetUpdate(true).SetLink(t.gameObject);
+                if (c.Pill != null) Fx.Punch(c.Pill, up ? 0.12f : 0.07f, 0.4f);
+            }
         }
 
         public RectTransform CoinPill(Transform parent, bool plus = true)
         {
-            var pill = UI.Sliced(parent, "chip", 82, "CoinPill", true);
-            pill.color = new Color(0.10f, 0.15f, 0.32f, 0.92f);
-            var rt = pill.rectTransform; rt.sizeDelta = new Vector2(300, 82);
-            var coin = UI.Icon(rt, "coin", 74, "Coin");
-            UI.Place(coin.rectTransform, 0, 0.5f, 42, 0, 74, 74);
+            var pill = UI.Sliced(parent, "chip", 84, "CoinPill", true);
+            var rt = pill.rectTransform; rt.sizeDelta = new Vector2(300, 84);
+            var coin = UI.Icon(rt, "coin", 62, "Coin");
+            UI.Place(coin.rectTransform, 0, 0.5f, 44, 0, 62, 62);
             var t = UI.Label(rt, SaveSystem.Data.coins.ToString("N0"), 40, Color.white, TextAnchor.MiddleCenter);
-            UI.Place(t.rectTransform, 0.5f, 0.5f, 6, 0, 170, 60);
-            t.resizeTextForBestFit = true; t.resizeTextMinSize = 24; t.resizeTextMaxSize = 40;
+            UI.Stretch(t.rectTransform, 84, 0, plus ? 84 : 28, 0);
+            t.resizeTextForBestFit = true; t.resizeTextMinSize = 22; t.resizeTextMaxSize = 40;
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
-            coinPills.Add(t);
+            coinDisplays.Add(new CoinDisplay { T = t, Shown = SaveSystem.Data.coins, Pill = rt });
             if (plus)
             {
-                var p = UI.Icon(rt, "rb_plus", 66, "Plus");
-                UI.Place(p.rectTransform, 1, 0.5f, -44, 0, 66, 66);
+                var p = UI.Icon(rt, "rb_plus", 60, "Plus");
+                UI.Place(p.rectTransform, 1, 0.5f, -44, 0, 60, 60);
                 UI.Click(p, () => ShowShop());
             }
             UI.Click(pill, () => ShowShop());

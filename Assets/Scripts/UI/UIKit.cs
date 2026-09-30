@@ -24,12 +24,12 @@ namespace WordQuest
         public static readonly Color Teal = new Color32(0x1F, 0xB5, 0xA8, 255);
         public static readonly Color Grey = new Color32(0xA9, 0xB3, 0xC7, 255);
 
-        /// <summary>Colors for the found-word capsules.</summary>
+        /// <summary>Bright colors for the found-word capsules.</summary>
         public static readonly Color[] Capsules =
         {
-            new Color32(0xFF, 0x5F, 0x6D, 255), new Color32(0xFF, 0x9F, 0x1C, 255), new Color32(0xFF, 0xD1, 0x2E, 255),
-            new Color32(0x4C, 0xD1, 0x64, 255), new Color32(0x2F, 0xC4, 0xC9, 255), new Color32(0x3D, 0x8B, 0xFF, 255),
-            new Color32(0x9B, 0x5B, 0xF0, 255), new Color32(0xFF, 0x62, 0xB6, 255),
+            new Color32(0xFF, 0x3B, 0x5C, 255), new Color32(0x1E, 0x90, 0xFF, 255), new Color32(0x22, 0xC5, 0x5E, 255),
+            new Color32(0x8B, 0x3D, 0xFF, 255), new Color32(0xFF, 0x9F, 0x1C, 255), new Color32(0x12, 0xC8, 0xE6, 255),
+            new Color32(0xFF, 0x4F, 0xA0, 255), new Color32(0xF5, 0xC4, 0x00, 255),
         };
     }
 
@@ -45,32 +45,6 @@ namespace WordQuest
             if (s == null) Debug.LogWarning("Missing art: " + key);
             cache[key] = s;
             return s;
-        }
-    }
-
-    public static class Shapes
-    {
-        static readonly Dictionary<int, Sprite> round = new Dictionary<int, Sprite>();
-        /// <summary>A plain white rounded rectangle, nine-sliced. Tint it with Image.color.</summary>
-        public static Sprite RoundRect(int radius = 30)
-        {
-            if (round.TryGetValue(radius, out var sp) && sp != null) return sp;
-            int size = radius * 2 + 4;
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
-            var px = new Color32[size * size];
-            float c = size / 2f - 0.5f, half = size / 2f - 1f;
-            for (int y = 0; y < size; y++)
-                for (int x = 0; x < size; x++)
-                {
-                    float dx = Mathf.Max(Mathf.Abs(x - c) - (half - radius), 0f), dy = Mathf.Max(Mathf.Abs(y - c) - (half - radius), 0f);
-                    float d = Mathf.Sqrt(dx * dx + dy * dy) - radius;
-                    float a = Mathf.Clamp01(0.5f - d);
-                    px[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255));
-                }
-            tex.SetPixels32(px); tex.Apply();
-            sp = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(radius + 2, radius + 2, radius + 2, radius + 2));
-            round[radius] = sp;
-            return sp;
         }
     }
 
@@ -172,6 +146,15 @@ namespace WordQuest
             return img;
         }
 
+        public static Image FlatPill(Transform parent, Color c, string name = "Pill")
+        {
+            var rt = Node(parent, name);
+            var img = rt.gameObject.AddComponent<Image>();
+            img.sprite = Shapes.FlatPill(); img.type = Image.Type.Sliced; img.color = c; img.raycastTarget = false;
+            var fit = rt.gameObject.AddComponent<SliceFitter>(); fit.Mode = SliceFitter.Kind.Pill;
+            return img;
+        }
+
         public static Image Solid(Transform parent, Color c, string name = "Solid", bool raycast = false)
         {
             var rt = Node(parent, name);
@@ -180,13 +163,65 @@ namespace WordQuest
             return img;
         }
 
-        /// <summary>Nine-sliced image. `height` is how tall it will be drawn; the corner size scales with it.</summary>
+        static readonly Dictionary<string, Color> PillColors = new Dictionary<string, Color>
+        {
+            { "btn_green", new Color32(0x3C, 0xC2, 0x5A, 255) }, { "btn_yellow", new Color32(0xFF, 0xC8, 0x2E, 255) },
+            { "btn_blue", new Color32(0x2F, 0x9B, 0xF5, 255) }, { "btn_red", new Color32(0xF0, 0x4B, 0x4B, 255) },
+            { "btn_purple", new Color32(0x8E, 0x5B, 0xE8, 255) }, { "btn_grey", new Color32(0xA9, 0xB3, 0xC7, 255) },
+            { "btn_white", new Color32(0xF4, 0xF6, 0xFB, 255) }, { "btn_navy", new Color32(0x18, 0x24, 0x4A, 255) },
+            { "btn_orange", new Color32(0xFF, 0x8A, 0x2B, 255) }, { "btn_pink", new Color32(0xFF, 0x5F, 0x9E, 255) },
+            { "chip", new Color32(0x1B, 0x27, 0x4D, 235) }, { "navbar", new Color32(0x14, 0x1E, 0x44, 245) },
+            { "track", new Color32(0x14, 0x1E, 0x3F, 255) }, { "fill", new Color32(0x3C, 0xC2, 0x5A, 255) },
+        };
+
+        public static bool IsPillKey(string key) => key != null && PillColors.ContainsKey(key);
+
+        /// <summary>Gives an Image the look of `key`: exact pills and cards are drawn in code, everything else uses painted art.</summary>
+        public static void ApplyStyle(Image img, string key, float height = 100f)
+        {
+            img.type = Image.Type.Sliced; img.preserveAspect = false;
+            var fit = img.GetComponent<SliceFitter>();
+            var gloss = img.transform.Find("Gloss");
+            if (IsPillKey(key))
+            {
+                img.sprite = Shapes.Pill(); img.color = PillColors[key];
+                if (fit == null) fit = img.gameObject.AddComponent<SliceFitter>();
+                fit.Mode = SliceFitter.Kind.Pill;
+                bool wantGloss = key.StartsWith("btn_") || key == "fill";
+                if (wantGloss && gloss == null)
+                {
+                    var g = Node(img.transform, "Gloss");
+                    var gi = g.gameObject.AddComponent<Image>();
+                    gi.sprite = Shapes.Gloss(); gi.type = Image.Type.Sliced; gi.raycastTarget = false;
+                    gi.pixelsPerUnitMultiplier = 64f / Mathf.Max(8f, height * 0.40f);
+                    g.anchorMin = new Vector2(0, 0.52f); g.anchorMax = new Vector2(1, 1);
+                    g.offsetMin = new Vector2(height * 0.26f, 0); g.offsetMax = new Vector2(-height * 0.26f, -height * 0.08f);
+                }
+                else if (!wantGloss && gloss != null) UnityEngine.Object.Destroy(gloss.gameObject);
+            }
+            else if (key == "card_a" || key == "card_b" || key == "popup")
+            {
+                bool pop = key == "popup";
+                img.sprite = Shapes.Card(pop ? 1 : 0); img.color = Color.white;
+                if (fit == null) fit = img.gameObject.AddComponent<SliceFitter>();
+                fit.Mode = SliceFitter.Kind.Card; fit.CardBorder = pop ? 68f : 48f;
+            }
+            else
+            {
+                img.sprite = Art.Get(key);
+                if (fit != null) UnityEngine.Object.Destroy(fit);
+                if (img.sprite != null) img.pixelsPerUnitMultiplier = Mathf.Max(0.1f, img.sprite.rect.height / Mathf.Max(1, height));
+            }
+        }
+
+        /// <summary>Nine-sliced image. Pills and cards are drawn in code so their corners are exact.</summary>
         public static Image Sliced(Transform parent, string key, float height, string name = null, bool raycast = false)
         {
-            var img = Img(parent, key, name, raycast);
-            img.type = Image.Type.Sliced;
-            img.preserveAspect = false;
-            if (img.sprite != null) img.pixelsPerUnitMultiplier = Mathf.Max(0.1f, img.sprite.rect.height / Mathf.Max(1, height));
+            var rt = Node(parent, name ?? key ?? "Image");
+            var img = rt.gameObject.AddComponent<Image>();
+            img.raycastTarget = raycast;
+            ApplyStyle(img, key, height);
+            if (img.sprite == null) img.color = new Color(1, 1, 1, 0);
             return img;
         }
 
@@ -274,7 +309,7 @@ namespace WordQuest
             Stretch(track.rectTransform);
             bar.Fill = Sliced(bar.Root, "fill", h - 6, "Fill");
             if (fillColor.HasValue) bar.Fill.color = fillColor.Value;
-            bar.Setup(4, h * 0.6f);
+            bar.Setup(4, h - 8f);
             bar.Set(0);
             return bar;
         }

@@ -81,7 +81,6 @@ namespace WordQuest
                 var ring = UI.Img(row, "spark_ring", "Pulse"); ring.color = new Color(1, 1, 0.7f, 0.9f);
                 UI.Place(ring.rectTransform, 0.5f, 1, x, -85, 210, 210);
                 ring.transform.SetAsFirstSibling();
-                ring.gameObject.AddComponent<Pulse>().Amount = 0.1f;
             }
             if (!isCur)
             {
