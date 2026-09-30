@@ -84,7 +84,7 @@ namespace WordQuest
             var chap = UI.Label(cont, $"{Levels.ChapterName(next)} - {Levels.DiffName(spec.Diff)}", 32, Levels.DiffColor(spec.Diff), TextAnchor.MiddleLeft);
             UI.PlaceL(chap.rectTransform, 0, 1, 300, -128, 640, 44);
             var bar = UI.ProgressBar(cont, 560, 40, null, "Chapter");
-            UI.Place(bar.Root, 0, 1, 300 + 320, -190, 640, 40);
+            UI.Place(bar.Root, 0, 1, 300 + 320, -176, 640, 40);
             bar.Root.sizeDelta = new Vector2(640, 40);
             int ch = Levels.Chapter(next), first = ch * Levels.PerChapter + 1, doneInCh = Mathf.Clamp(next - first, 0, Levels.PerChapter);
             bar.Set(doneInCh / (float)Levels.PerChapter);
@@ -101,17 +101,17 @@ namespace WordQuest
             UI.Click(col, () => ShowTab(Tab.Collection));
             var bk = UI.Icon(col.transform, "tab_collection", 130, "Book"); UI.Place(bk.rectTransform, 0.5f, 1, 0, -90, 130, 130);
             var ct = UI.Label(col.transform, "COLLECTION", 34, Palette.Ink); UI.Place(ct.rectTransform, 0.5f, 0.5f, 0, -20, 440, 44);
-            var cc = UI.Label(col.transform, $"{Progress.TotalDiscovered()} words found", 30, Palette.InkSoft); UI.Place(cc.rectTransform, 0.5f, 0.5f, 0, -72, 440, 40);
+            var cc = UI.Label(col.transform, $"{Progress.TotalDiscovered()} words found", 30, Palette.InkSoft); UI.Place(cc.rectTransform, 0.5f, 0.5f, 0, -62, 440, 40);
             int all = 0; foreach (var c in WordBank.All) all += c.Words.Length;
-            var cb = UI.ProgressBar(col.transform, 380, 34, Palette.Green, "P"); UI.Place(cb.Root, 0.5f, 0, 0, 44, 380, 34); cb.Set(Progress.TotalDiscovered() / (float)all);
+            var cb = UI.ProgressBar(col.transform, 380, 34, Palette.Green, "P"); UI.Place(cb.Root, 0.5f, 0, 0, 62, 380, 34); cb.Set(Progress.TotalDiscovered() / (float)all);
 
             var lg = UI.Sliced(two, "card_a", 300, "League"); lg.rectTransform.sizeDelta = new Vector2(488, 300);
             UI.Place(lg.rectTransform, 1, 0.5f, -244, 0, 488, 300);
             UI.Click(lg, () => ShowLeague(false));
             var sh = UI.Icon(lg.transform, "league", 130, "Shield"); UI.Place(sh.rectTransform, 0.5f, 1, 0, -90, 130, 130); sh.color = Color.Lerp(Color.white, League.TierColors[d.leagueTier], 0.45f);
             var lt = UI.Label(lg.transform, League.Tiers[d.leagueTier].ToUpper() + " LEAGUE", 34, Palette.Ink); UI.Place(lt.rectTransform, 0.5f, 0.5f, 0, -20, 460, 44);
-            var lr = UI.Label(lg.transform, $"Rank #{League.MyRank}", 30, Palette.InkSoft); UI.Place(lr.rectTransform, 0.5f, 0.5f, 0, -72, 440, 40);
-            var ld = UI.Label(lg.transform, $"{7 - League.DaysIntoWeek} days left", 28, Palette.InkSoft); UI.Place(ld.rectTransform, 0.5f, 0, 0, 50, 440, 40);
+            var lr = UI.Label(lg.transform, $"Rank #{League.MyRank}", 30, Palette.InkSoft); UI.Place(lr.rectTransform, 0.5f, 0.5f, 0, -62, 440, 40);
+            var ld = UI.Label(lg.transform, $"{7 - League.DaysIntoWeek} days left", 28, Palette.InkSoft); UI.Place(ld.rectTransform, 0.5f, 0, 0, 64, 440, 40);
             y += 24;
 
             // ---- today's missions ----

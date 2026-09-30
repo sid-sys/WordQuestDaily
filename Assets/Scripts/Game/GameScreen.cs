@@ -106,11 +106,12 @@ namespace WordQuest
 
             // --- word list: plain bold words in a light panel, struck through when found ---
             float listTop = 206;
-            float listBottom = BuildWordList(root, listTop);
+            float ls = rootH > 1900 ? 1.22f : 1f;   // tall phones get a bigger word list
+            float listBottom = BuildWordList(root, listTop, ls);
 
             // --- the word being swiped (pill) ---
             float pillY = listBottom + 14;
-            g.CurrentPill = UI.Sliced(root, "btn_purple", 72, "Current");
+            g.CurrentPill = UI.Sliced(root, "btn_white", 72, "Current");
             UI.Place(g.CurrentPill.rectTransform, 0.5f, 1, 0, -(pillY + 36), 300, 72);
             g.CurrentText = UI.Label(g.CurrentPill.transform, "", 44, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.CurrentText.rectTransform, 0, 4, 0, 0);
             g.CurrentPill.gameObject.SetActive(false);
@@ -122,7 +123,8 @@ namespace WordQuest
             float cell = Mathf.Min(availW / puzzle.Cols, availH / puzzle.Rows, 190f);
             float bw = cell * puzzle.Cols, bh = cell * puzzle.Rows;
             var boardHolder = UI.Node(root, "Board");
-            float boardCenterY = -(boardTop + (availH + 24) / 2);
+            float extra = Mathf.Max(0f, availH - bh);
+            float boardCenterY = -(boardTop + Mathf.Min(extra * 0.35f, 120f) + (bh + 36) / 2f);
             UI.Place(boardHolder, 0.5f, 1, 0, boardCenterY, bw + 36, bh + 36);
             var panel = UI.Round(boardHolder, Color.white, 34, "Panel");
             UI.Stretch(panel.rectTransform);
@@ -139,6 +141,7 @@ namespace WordQuest
                 if (text == null) { g.CurrentPill.gameObject.SetActive(false); return; }
                 g.CurrentPill.gameObject.SetActive(true);
                 g.CurrentText.text = text;
+                g.CurrentPill.color = new Color(1f, 0.78f, 0.2f);
                 g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, text.Length * 38 + 100), 72);
             };
             Fx.PopIn(boardHolder, 0.4f);
@@ -158,7 +161,7 @@ namespace WordQuest
         }
 
         /// <summary>Light panel with the words in columns. Returns the bottom y of the panel.</summary>
-        float BuildWordList(RectTransform root, float top)
+        float BuildWordList(RectTransform root, float top, float scale)
         {
             var g = game;
             var words = g.Puzzle.Words.Select(w => w.Word).ToList();
@@ -166,11 +169,11 @@ namespace WordQuest
             int n = words.Count;
             int cols = n <= 6 ? 2 : n <= 12 ? 3 : 4;
             int rows = Mathf.CeilToInt(n / (float)cols);
-            float rowH = n > 12 ? 44f : 52f, padY = 18;
+            float rowH = (n > 12 ? 44f : 52f) * scale, padY = 18 * scale;
             float w = 1000, h = rows * rowH + padY * 2;
             var panel = UI.Round(root, new Color(0.96f, 0.97f, 0.99f, 0.96f), 30, "WordList");
             UI.Place(panel.rectTransform, 0.5f, 1, 0, -(top + h / 2), w, h);
-            int fontSize = n > 12 ? 30 : 36;
+            int fontSize = Mathf.RoundToInt((n > 12 ? 30 : 36) * scale);
             for (int i = 0; i < n; i++)
             {
                 int r = i / cols, c = i % cols;
@@ -265,7 +268,7 @@ namespace WordQuest
                 g.CurrentPill.gameObject.SetActive(true);
                 g.CurrentText.text = p.Word;
                 var lc = grid.LastColor;
-                g.CurrentPill.color = new Color(Mathf.Lerp(lc.r, 0.5f, 0.2f), Mathf.Lerp(lc.g, 0.5f, 0.2f), Mathf.Lerp(lc.b, 0.5f, 0.2f), 1f);
+                g.CurrentPill.color = new Color(lc.r, lc.g, lc.b, 1f);
                 g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, p.Word.Length * 38 + 100), 72);
                 Fx.Punch(g.CurrentPill.rectTransform, 0.15f, 0.3f);
             }

@@ -103,7 +103,7 @@ namespace WordQuest
             {
                 var sc = UI.Label(c, $"Score {r.DailyScore:N0}", 44, Palette.Ink); UI.Place(sc.rectTransform, 0.5f, 1, 0, -y - 20, 800, 56); y += 56;
                 int streak = Progress.EffectiveStreak();
-                var st = UI.Label(c, $"Streak: {streak} days", 38, Palette.Orange); UI.Place(st.rectTransform, 0.5f, 1, 0, -y - 16, 800, 50); y += 54;
+                var st = UI.Label(c, $"Streak: {streak} {(streak == 1 ? "day" : "days")}", 38, Palette.Orange); UI.Place(st.rectTransform, 0.5f, 1, 0, -y - 16, 800, 50); y += 54;
             }
             else
             {
@@ -152,6 +152,17 @@ namespace WordQuest
                 });
             }, 50);
             UI.Place((RectTransform)next.transform, 0.5f, 0, 130, 50, 470, 110);
+            if (spec.IsDaily)
+            {
+                var share = UI.Pill(c, "btn_purple", "SHARE", 300, 80, () =>
+                {
+                    int streakNow = Progress.EffectiveStreak();
+                    string squares = new string('\u2B50', r.Stars) ;
+                    GUIUtility.systemCopyBuffer = $"Word Quest Daily {Clock.TodayKey}\n{squares}  {r.DailyScore:N0} points\nStreak: {streakNow} days";
+                    Toast("Result copied! Paste it to share.", Palette.Green);
+                }, 38);
+                UI.Place((RectTransform)share.transform, 0.5f, 0, 0, 290, 300, 80);
+            }
             var home = UI.Pill(c, "btn_blue", "HOME", 260, 110, () => { p.Close(); EndGame(); ShowTab(Tab.Home); }, 42);
             UI.Place((RectTransform)home.transform, 0.5f, 0, -300, 50, 260, 110);
 
