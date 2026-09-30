@@ -48,6 +48,32 @@ namespace WordQuest
         }
     }
 
+    public static class Shapes
+    {
+        static readonly Dictionary<int, Sprite> round = new Dictionary<int, Sprite>();
+        /// <summary>A plain white rounded rectangle, nine-sliced. Tint it with Image.color.</summary>
+        public static Sprite RoundRect(int radius = 30)
+        {
+            if (round.TryGetValue(radius, out var sp) && sp != null) return sp;
+            int size = radius * 2 + 4;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var px = new Color32[size * size];
+            float c = size / 2f - 0.5f, half = size / 2f - 1f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = Mathf.Max(Mathf.Abs(x - c) - (half - radius), 0f), dy = Mathf.Max(Mathf.Abs(y - c) - (half - radius), 0f);
+                    float d = Mathf.Sqrt(dx * dx + dy * dy) - radius;
+                    float a = Mathf.Clamp01(0.5f - d);
+                    px[y * size + x] = new Color32(255, 255, 255, (byte)(a * 255));
+                }
+            tex.SetPixels32(px); tex.Apply();
+            sp = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(radius + 2, radius + 2, radius + 2, radius + 2));
+            round[radius] = sp;
+            return sp;
+        }
+    }
+
     /// <summary>Press-down squash and click sound for every button.</summary>
     public class ButtonFx : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
     {
@@ -110,6 +136,16 @@ namespace WordQuest
         }
 
         // ---------- images ----------
+        /// <summary>For left aligned text: x is the LEFT edge of the box (not its center).</summary>
+        public static RectTransform PlaceL(RectTransform rt, float ax, float ay, float xLeft, float y, float w, float h)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(ax, ay);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = new Vector2(xLeft, y);
+            rt.sizeDelta = new Vector2(w, h);
+            return rt;
+        }
+
         public static Image Img(Transform parent, string spriteKey, string name = null, bool raycast = false)
         {
             var rt = Node(parent, name ?? spriteKey ?? "Image");
@@ -125,6 +161,14 @@ namespace WordQuest
         {
             var img = Img(parent, key, name);
             img.rectTransform.sizeDelta = new Vector2(size, size);
+            return img;
+        }
+
+        public static Image Round(Transform parent, Color c, int radius = 30, string name = "Round", bool raycast = false)
+        {
+            var rt = Node(parent, name);
+            var img = rt.gameObject.AddComponent<Image>();
+            img.sprite = Shapes.RoundRect(radius); img.type = Image.Type.Sliced; img.color = c; img.raycastTarget = raycast;
             return img;
         }
 
@@ -174,7 +218,8 @@ namespace WordQuest
         public static Button Click(Graphic target, Action onClick, bool sound = true)
         {
             target.raycastTarget = true;
-            var b = target.gameObject.GetComponent<Button>() ?? target.gameObject.AddComponent<Button>();
+            var b = target.gameObject.GetComponent<Button>();
+            if (b == null) b = target.gameObject.AddComponent<Button>();
             b.transition = Selectable.Transition.None;
             b.targetGraphic = target;
             if (target.gameObject.GetComponent<ButtonFx>() == null) target.gameObject.AddComponent<ButtonFx>();

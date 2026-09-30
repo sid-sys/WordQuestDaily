@@ -21,11 +21,11 @@ namespace WordQuest
             // ---- title + streak ----
             var top = RowAt(content, ref y, 260);
             var mark = UI.Img(top, "logo_mark", "Logo");
-            UI.Place(mark.rectTransform, 0.5f, 0.5f, -300, 0, 210, 240);
+            UI.Place(mark.rectTransform, 0.5f, 0.5f, -330, 0, 200, 230);
             var title = UI.Label(top, "WORD QUEST", 96, Color.white, TextAnchor.MiddleLeft, true);
-            UI.Place(title.rectTransform, 0.5f, 0.5f, 90, 40, 700, 110);
+            UI.PlaceL(title.rectTransform, 0.5f, 0.5f, -210, 40, 700, 110);
             var sub = UI.Label(top, "DAILY", 58, Palette.Yellow, TextAnchor.MiddleLeft, true);
-            UI.Place(sub.rectTransform, 0.5f, 0.5f, -50 + 205, -40, 300, 70);
+            UI.PlaceL(sub.rectTransform, 0.5f, 0.5f, -205, -50, 300, 70);
 
             int streak = Progress.EffectiveStreak();
             var streakRow = RowAt(content, ref y, 110);
@@ -34,10 +34,10 @@ namespace WordQuest
             UI.Place(sp.rectTransform, 0.5f, 0.5f, 0, 0, 640, 100);
             var fl = UI.Icon(sp.transform, "flame", 90, "Flame"); UI.Place(fl.rectTransform, 0, 0.5f, 60, 4, 90, 90);
             var st = UI.Label(sp.transform, streak > 0 ? $"{streak} DAY STREAK" : "START YOUR STREAK", 44, Color.white, TextAnchor.MiddleLeft);
-            UI.Place(st.rectTransform, 0, 0.5f, 120, 0, 460, 60);
+            UI.PlaceL(st.rectTransform, 0, 0.5f, 120, 0, 420, 60);
             var fr = UI.Icon(sp.transform, "freeze", 76, "Freeze"); UI.Place(fr.rectTransform, 1, 0.5f, -82, 2, 76, 76);
             var frt = UI.Label(sp.transform, "x" + d.freezes, 32, Color.white); UI.Place(frt.rectTransform, 1, 0.5f, -30, -20, 60, 40);
-            y += 10;
+            y += 50;
 
             // ---- daily quest card ----
             var q = Levels.Daily(Clock.Today);
@@ -50,11 +50,11 @@ namespace WordQuest
             var rt = UI.Label(rib.transform, "DAILY QUEST", 50, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(rt.rectTransform, 0, 6, 0, 0);
             var catArt = UI.Icon(dq, WordBank.Get(q.Category).ArtKey, 190, "Cat"); UI.Place(catArt.rectTransform, 0, 0.5f, 170, -20, 190, 190);
             var theme = UI.Label(dq, Levels.DailyTheme(Clock.Today).ToUpper() + " DAY", 44, Palette.Ink, TextAnchor.MiddleLeft);
-            UI.Place(theme.rectTransform, 0, 0.5f, 290, 50, 640, 56);
+            UI.PlaceL(theme.rectTransform, 0, 0.5f, 300, 50, 660, 56);
             var meta = UI.Label(dq, $"{WordBank.Get(q.Category).Name}  -  {q.Cols}x{q.Rows}  -  {q.WordCount} words", 30, Palette.InkSoft, TextAnchor.MiddleLeft);
-            UI.Place(meta.rectTransform, 0, 0.5f, 290, 0, 680, 40);
+            UI.PlaceL(meta.rectTransform, 0, 0.5f, 300, 0, 680, 40);
             var dif = UI.Label(dq, Levels.DiffName(q.Diff).ToUpper(), 30, Levels.DiffColor(q.Diff), TextAnchor.MiddleLeft, false);
-            UI.Place(dif.rectTransform, 0, 0.5f, 290, -42, 640, 40);
+            UI.PlaceL(dif.rectTransform, 0, 0.5f, 300, -42, 640, 40);
             if (!done)
             {
                 var play = UI.Pill(dq, "btn_green", "PLAY", 460, 120, () => OpenPrep(q), 60);
@@ -80,17 +80,18 @@ namespace WordQuest
             var cbg = UI.Sliced(cont, "card_a", 300, "Continue"); UI.Stretch(cbg.rectTransform);
             var spec = Levels.Get(next);
             var lvT = UI.Label(cont, $"LEVEL {next}", 60, Palette.Ink, TextAnchor.MiddleLeft);
-            UI.Place(lvT.rectTransform, 0, 1, 330, -70, 500, 74);
+            UI.PlaceL(lvT.rectTransform, 0, 1, 300, -70, 560, 74);
             var chap = UI.Label(cont, $"{Levels.ChapterName(next)} - {Levels.DiffName(spec.Diff)}", 32, Levels.DiffColor(spec.Diff), TextAnchor.MiddleLeft);
-            UI.Place(chap.rectTransform, 0, 1, 330, -128, 600, 44);
+            UI.PlaceL(chap.rectTransform, 0, 1, 300, -128, 640, 44);
             var bar = UI.ProgressBar(cont, 560, 40, null, "Chapter");
-            UI.Place(bar.Root, 0, 1, 330 + 280 - 0, -190, 560, 40);
+            UI.Place(bar.Root, 0, 1, 300 + 320, -190, 640, 40);
+            bar.Root.sizeDelta = new Vector2(640, 40);
             int ch = Levels.Chapter(next), first = ch * Levels.PerChapter + 1, doneInCh = Mathf.Clamp(next - first, 0, Levels.PerChapter);
             bar.Set(doneInCh / (float)Levels.PerChapter);
             var bt = UI.Label(bar.Root, $"{doneInCh}/{Levels.PerChapter}", 26, Color.white); UI.Stretch(bt.rectTransform);
             var nodeIcon = UI.Icon(cont, "node_current", 220, "Node"); UI.Place(nodeIcon.rectTransform, 0, 0.5f, 160, 0, 220, 220);
             var go = UI.Pill(cont, "btn_green", "CONTINUE", 420, 96, () => OpenPrep(spec), 46);
-            UI.Place((RectTransform)go.transform, 0, 0, 330 + 210, 56, 420, 96);
+            UI.Place((RectTransform)go.transform, 0, 0, 300 + 200, 54, 400, 96);
             y += 24;
 
             // ---- collection + league cards ----
@@ -116,7 +117,7 @@ namespace WordQuest
             // ---- today's missions ----
             var ms = RowAt(content, ref y, 380);
             var mbg = UI.Sliced(ms, "card_a", 300, "Missions"); UI.Stretch(mbg.rectTransform);
-            var mh = UI.Label(ms, "TODAY'S MISSIONS", 40, Palette.Ink, TextAnchor.MiddleLeft); UI.Place(mh.rectTransform, 0, 1, 260, -50, 480, 50);
+            var mh = UI.Label(ms, "TODAY'S MISSIONS", 40, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(mh.rectTransform, 0, 1, 150, -50, 560, 50);
             var mp = UI.Label(ms, $"{Progress.MissionsDone()}/4", 40, Palette.Green, TextAnchor.MiddleRight); UI.Place(mp.rectTransform, 1, 1, -80, -50, 200, 50);
             var m = d.missions;
             string[] names = { "Finish the Daily Quest", "Find a Mystery Word", "Win with no power-ups", "Complete 3 levels" };
@@ -124,13 +125,13 @@ namespace WordQuest
             for (int i = 0; i < 4; i++)
             {
                 var ic = UI.Icon(ms, st4[i] ? "check" : "star_empty", 52, "M" + i);
-                UI.Place(ic.rectTransform, 0, 1, 70, -110 - i * 58, 52, 52);
+                UI.Place(ic.rectTransform, 0, 1, 70, -120 - i * 58, 52, 52);
                 var nl = UI.Label(ms, names[i], 34, st4[i] ? Palette.Green : Palette.Ink, TextAnchor.MiddleLeft);
-                UI.Place(nl.rectTransform, 0, 1, 130 + 300, -110 - i * 58, 600, 48);
+                UI.PlaceL(nl.rectTransform, 0, 1, 110, -120 - i * 58, 700, 48);
             }
             var perfect = UI.Label(ms, m.claimed ? "Perfect Day done!" : "All 4 = Perfect Day: +100 coins", 30, m.claimed ? Palette.Green : Palette.InkSoft);
             UI.Place(perfect.rectTransform, 0.5f, 0, 0, 30, 800, 40);
-            var missIcon = UI.Icon(ms, "calendar", 110, "Cal"); UI.Place(missIcon.rectTransform, 0, 1, 130, -60, 110, 110);
+            var missIcon = UI.Icon(ms, "calendar", 110, "Cal"); UI.Place(missIcon.rectTransform, 0, 1, 76, -56, 90, 90);
             y += 20;
             EndScroll(content, y);
         }

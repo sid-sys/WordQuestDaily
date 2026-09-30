@@ -93,7 +93,7 @@ namespace WordQuest
                 var row = UI.Node(p.Content, label);
                 UI.Place(row, 0.5f, 1, 0, -y - 60, 800, 110);
                 var t = UI.Label(row, label, 46, Palette.Ink, TextAnchor.MiddleLeft);
-                UI.Place(t.rectTransform, 0, 0.5f, 240, 0, 460, 70);
+                UI.PlaceL(t.rectTransform, 0, 0.5f, 170, 0, 400, 70);
                 var btn = UI.Pill(row, get() ? "btn_green" : "btn_grey", get() ? "ON" : "OFF", 220, 90, null, 44);
                 UI.Place((RectTransform)btn.transform, 1, 0.5f, -130, 0, 220, 90);
                 btn.onClick.RemoveAllListeners();
@@ -149,7 +149,7 @@ namespace WordQuest
             var sub = UI.Label(p.Content, can ? "Come back every day for bigger gifts!" : "Come back tomorrow for the next gift", 36, Palette.InkSoft);
             UI.Place(sub.rectTransform, 0.5f, 1, 0, -50, 860, 50);
 
-            float tw = 270, th = 300, gx = 24, gy = 24;
+            float tw = 214, th = 290, gx = 18, gy = 22;
             var tiles = new List<RectTransform>();
             for (int i = 0; i < 7; i++)
             {
@@ -162,14 +162,14 @@ namespace WordQuest
                 if (done) tile.color = new Color(0.8f, 0.95f, 0.8f);
                 UI.Place(tile.rectTransform, 0.5f, 1, x, -150 - row * (th + gy) - th / 2, tw, th);
                 var head = UI.Label(tile.transform, "DAY " + (i + 1), 32, Palette.Ink);
-                UI.Place(head.rectTransform, 0.5f, 1, 0, -34, 240, 40);
+                UI.Place(head.rectTransform, 0.5f, 1, 0, -34, 200, 40);
                 var r = Economy.Daily[i];
                 string art = r.Power >= 0 && r.Coins == 0 ? PowerUps.Art[r.Power] : i == 6 ? "chest" : r.Coins >= 250 ? "coin_bag" : r.Coins >= 150 ? "coin_stack" : "coin";
-                var ic = UI.Icon(tile.transform, art, 130, "Icon");
-                UI.Place(ic.rectTransform, 0.5f, 0.5f, 0, 8, 130, 130);
-                var lab = UI.Label(tile.transform, r.Label, 28, Palette.Ink);
+                var ic = UI.Icon(tile.transform, art, 120, "Icon");
+                UI.Place(ic.rectTransform, 0.5f, 0.5f, 0, 10, 120, 120);
+                var lab = UI.Label(tile.transform, r.Label, 26, Palette.Ink);
                 lab.horizontalOverflow = HorizontalWrapMode.Wrap;
-                UI.Place(lab.rectTransform, 0.5f, 0, 0, 40, 240, 60);
+                UI.Place(lab.rectTransform, 0.5f, 0, 0, 44, 196, 70);
                 if (done) { var ck = UI.Icon(tile.transform, "check", 70, "Done"); UI.Place(ck.rectTransform, 1, 1, -30, -30, 70, 70); }
                 if (current) { tiles.Add(tile.rectTransform); tile.rectTransform.localScale = Vector3.one; }
             }
@@ -212,9 +212,9 @@ namespace WordQuest
                 var row = ListRow(content, ref y, 170, w);
                 var ic = UI.Icon(row, "gift", 120, "Gift"); UI.Place(ic.rectTransform, 0, 0.5f, 90, 0, 120, 120);
                 var t = UI.Label(row, $"Free {Economy.AdCoins} coins", 42, Palette.Ink, TextAnchor.MiddleLeft);
-                UI.Place(t.rectTransform, 0, 0.5f, 400, 28, 420, 56);
+                UI.PlaceL(t.rectTransform, 0, 0.5f, 190, 28, 420, 56);
                 var s = UI.Label(row, $"{Progress.AdCoinClaimsLeft()} left today", 30, Palette.InkSoft, TextAnchor.MiddleLeft);
-                UI.Place(s.rectTransform, 0, 0.5f, 400, -28, 420, 44);
+                UI.PlaceL(s.rectTransform, 0, 0.5f, 190, -28, 420, 44);
                 bool ok = Progress.AdCoinClaimsLeft() > 0;
                 var b = UI.Pill(row, ok ? "btn_yellow" : "btn_grey", ok ? "WATCH" : "DONE", 220, 96, () =>
                 {
@@ -242,11 +242,11 @@ namespace WordQuest
                 var row = ListRow(content, ref y, 190, w);
                 var ic = UI.Icon(row, PowerUps.Art[i], 130, "Icon"); UI.Place(ic.rectTransform, 0, 0.5f, 90, 0, 130, 130);
                 var n = UI.Label(row, $"{PowerUps.Names[i]}  x{PowerUps.Count(d, pu)}", 40, Palette.Ink, TextAnchor.MiddleLeft);
-                UI.Place(n.rectTransform, 0, 0.5f, 430, 36, 500, 52);
+                UI.PlaceL(n.rectTransform, 0, 0.5f, 190, 36, 430, 52);
                 var ds = UI.Label(row, PowerUps.Info[i], 26, Palette.InkSoft, TextAnchor.MiddleLeft);
-                UI.Place(ds.rectTransform, 0, 0.5f, 430, -8, 520, 40);
+                UI.PlaceL(ds.rectTransform, 0, 0.5f, 190, -8, 430, 40);
                 var mx = UI.Label(row, $"Max {PowerUps.Max[i]}", 24, Palette.InkSoft, TextAnchor.MiddleLeft);
-                UI.Place(mx.rectTransform, 0, 0.5f, 430, -44, 520, 34);
+                UI.PlaceL(mx.rectTransform, 0, 0.5f, 190, -44, 430, 34);
                 bool full = PowerUps.IsFull(d, pu), afford = d.coins >= PowerUps.Cost[i];
                 var b = UI.Pill(row, full ? "btn_grey" : afford ? "btn_green" : "btn_grey", full ? "FULL" : "", 230, 100, () =>
                 {

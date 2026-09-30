@@ -32,9 +32,9 @@ namespace WordQuest
                 var bg = UI.Sliced(row, "card_a", 230, "Card", true); UI.Stretch(bg.rectTransform);
                 UI.Click(bg, () => ShowCategory(cat));
                 var ic = UI.Icon(row, c.ArtKey, 150, "Icon"); UI.Place(ic.rectTransform, 0, 0.5f, 110, 0, 150, 150);
-                var nm = UI.Label(row, c.Name.ToUpper(), 44, Palette.Ink, TextAnchor.MiddleLeft); UI.Place(nm.rectTransform, 0, 1, 500, -50, 560, 56);
+                var nm = UI.Label(row, c.Name.ToUpper(), 44, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(nm.rectTransform, 0, 1, 230, -50, 560, 56);
                 int f = Progress.Found(cat), tot = Progress.TotalIn(cat);
-                var pb = UI.ProgressBar(row, 520, 46, Palette.Green, "P"); UI.Place(pb.Root, 0, 0.5f, 190 + 260 + 60, -4, 520, 46);
+                var pb = UI.ProgressBar(row, 520, 46, Palette.Green, "P"); UI.Place(pb.Root, 0, 0.5f, 230 + 260, -4, 520, 46);
                 pb.Set(f / (float)tot);
                 var pt = UI.Label(pb.Root, $"{f} / {tot}", 28, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(pt.rectTransform);
                 int step = Progress.ClaimableStep(cat);
@@ -48,7 +48,7 @@ namespace WordQuest
                     UI.Place((RectTransform)claim.transform, 1, 0.5f, -130, -50, 200, 84);
                     claim.gameObject.AddComponent<Pulse>().Amount = 0.06f;
                 }
-                var next = UI.Label(row, Progress.StepLabel(cat), 26, Palette.InkSoft, TextAnchor.MiddleLeft); UI.Place(next.rectTransform, 0, 0, 500, 32, 520, 34);
+                var next = UI.Label(row, Progress.StepLabel(cat), 26, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(next.rectTransform, 0, 0, 230, 32, 520, 34);
                 y += 14;
             }
             EndScroll(content, y);
@@ -74,7 +74,7 @@ namespace WordQuest
                 string txt = got ? w : new string('?', w.Length);
                 float cw = Mathf.Max(120, txt.Length * 30 + 50);
                 if (x + cw > w0) { x = 0; y += rowH + 10; }
-                var chip = UI.Sliced(content, "chip", 70, "Chip");
+                var chip = UI.Sliced(content, "btn_white", 70, "Chip");
                 chip.color = got ? new Color(0.75f, 0.95f, 0.78f) : new Color(1, 1, 1, 0.85f);
                 UI.Place(chip.rectTransform, 0.5f, 1, -w0 / 2 + x + cw / 2, -(y + rowH / 2), cw, 72);
                 var t = UI.Label(chip.transform, txt, 32, got ? Palette.Ink : Palette.Grey, TextAnchor.MiddleCenter); UI.Stretch(t.rectTransform);

@@ -37,7 +37,7 @@ namespace WordQuest
                 if (medal != null) { var m = UI.Icon(row, medal, 70, "M"); UI.Place(m.rectTransform, 0, 0.5f, 60, 0, 70, 70); }
                 else { var n = UI.Label(row, r.Rank.ToString(), 40, Palette.InkSoft); UI.Place(n.rectTransform, 0, 0.5f, 60, 0, 90, 50); }
                 var av = Avatar(row, r.Avatar, 0, 88); UI.Place(av, 0, 0.5f, 170, 0, 88, 88);
-                var nm = UI.Label(row, r.IsYou ? r.Name + " (you)" : r.Name, 38, Palette.Ink, TextAnchor.MiddleLeft); UI.Place(nm.rectTransform, 0, 0.5f, 240 + 190, 0, 380, 50);
+                var nm = UI.Label(row, r.IsYou ? r.Name + " (you)" : r.Name, 38, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(nm.rectTransform, 0, 0.5f, 240, 0, 420, 50);
                 var pt = UI.Label(row, r.Points.ToString("N0"), 40, Palette.Ink, TextAnchor.MiddleRight); UI.Place(pt.rectTransform, 1, 0.5f, -130, 0, 200, 50);
             }
             EndScroll(content, y);

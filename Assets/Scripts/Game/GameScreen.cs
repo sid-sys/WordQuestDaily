@@ -27,6 +27,7 @@ namespace WordQuest
         public float LastFoundTime;
         public Button SkipButton;
         public Image HintBulb;
+        public Image CurrentPill; public Text CurrentText;
     }
 
     public partial class GameApp
@@ -83,59 +84,72 @@ namespace WordQuest
             var root = g.Root;
             float rootH = safe.rect.height;
 
-            // --- top bar ---
-            var back = UI.Icon(root, "rb_back", 100, "Back"); UI.Place(back.rectTransform, 0, 1, 80, -80, 100, 100);
+            // --- top bar: back, title, hint bulb ---
+            var back = UI.Icon(root, "rb_back", 96, "Back"); UI.Place(back.rectTransform, 0, 1, 70, -66, 96, 96);
             UI.Click(back, () => LeaveGame(true));
-            var title = UI.Label(root, spec.Title, 70, Color.white, TextAnchor.MiddleCenter, true);
-            UI.Place(title.rectTransform, 0.5f, 1, 0, -70, 560, 90);
+            var title = UI.Label(root, spec.Title, 64, Color.white, TextAnchor.MiddleCenter, true);
+            UI.Place(title.rectTransform, 0.5f, 1, 0, -46, 560, 80);
             var cat = WordBank.Get(puzzle.CategoryIndex);
-            var catLabel = UI.Label(root, $"{cat.Name.ToUpper()}  -  {Levels.DiffName(spec.Diff).ToUpper()}", 34, Color.white, TextAnchor.MiddleCenter, true);
-            UI.Place(catLabel.rectTransform, 0.5f, 1, 0, -130, 700, 44);
-            g.HintBulb = UI.Icon(root, "rb_bulb", 100, "Bulb"); UI.Place(g.HintBulb.rectTransform, 1, 1, -80, -80, 100, 100);
+            var catLabel = UI.Label(root, $"{cat.Name.ToUpper()}  -  {Levels.DiffName(spec.Diff).ToUpper()}", 30, Color.white, TextAnchor.MiddleCenter, true);
+            UI.Place(catLabel.rectTransform, 0.5f, 1, 0, -102, 700, 40);
+            g.HintBulb = UI.Icon(root, "rb_bulb", 96, "Bulb"); UI.Place(g.HintBulb.rectTransform, 1, 1, -70, -66, 96, 96);
             UI.Click(g.HintBulb, () => UsePower(PowerUp.Hint));
 
-            // --- progress bars ---
-            g.LevelBar = UI.ProgressBar(root, 820, 54, Palette.Green, "LevelBar");
-            UI.Place(g.LevelBar.Root, 0.5f, 1, 0, -205, 820, 54);
-            g.LevelBarText = UI.Label(g.LevelBar.Root, "", 32, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.LevelBarText.rectTransform);
-            g.CollectionBar = UI.ProgressBar(root, 560, 34, Palette.Blue, "CollectionBar");
-            UI.Place(g.CollectionBar.Root, 0.5f, 1, 0, -262, 560, 34);
-            g.CollectionText = UI.Label(g.CollectionBar.Root, "", 22, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.CollectionText.rectTransform);
-            var colIcon = UI.Icon(root, cat.ArtKey, 56, "CatIcon"); UI.Place(colIcon.rectTransform, 0.5f, 1, -330, -262, 56, 56);
+            // --- two progress bars side by side: this level, and the word collection ---
+            g.LevelBar = UI.ProgressBar(root, 520, 44, Palette.Green, "LevelBar");
+            UI.Place(g.LevelBar.Root, 0, 1, 40 + 260, -168, 520, 44);
+            g.LevelBarText = UI.Label(g.LevelBar.Root, "", 28, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.LevelBarText.rectTransform);
+            var colIcon = UI.Icon(root, cat.ArtKey, 52, "CatIcon"); UI.Place(colIcon.rectTransform, 0, 1, 600 + 26, -168, 52, 52);
+            g.CollectionBar = UI.ProgressBar(root, 380, 38, Palette.Blue, "CollectionBar");
+            UI.Place(g.CollectionBar.Root, 0, 1, 660 + 190, -168, 380, 38);
+            g.CollectionText = UI.Label(g.CollectionBar.Root, "", 24, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.CollectionText.rectTransform);
 
-            // --- word chips ---
-            float chipsTop = 318;
-            float chipsBottom = BuildChips(root, chipsTop);
+            // --- word list: plain bold words in a light panel, struck through when found ---
+            float listTop = 206;
+            float listBottom = BuildWordList(root, listTop);
 
-            // --- board ---
-            float powerH = 230;
-            float availH = rootH - chipsBottom - powerH - 60, availW = 960;
-            float cell = Mathf.Min(availW / puzzle.Cols, availH / puzzle.Rows, 150f);
+            // --- the word being swiped (pill) ---
+            float pillY = listBottom + 14;
+            g.CurrentPill = UI.Sliced(root, "btn_purple", 72, "Current");
+            UI.Place(g.CurrentPill.rectTransform, 0.5f, 1, 0, -(pillY + 36), 300, 72);
+            g.CurrentText = UI.Label(g.CurrentPill.transform, "", 44, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.CurrentText.rectTransform, 0, 4, 0, 0);
+            g.CurrentPill.gameObject.SetActive(false);
+
+            // --- board: a big white card, as wide as the screen allows ---
+            float powerH = 210;
+            float boardTop = pillY + 72 + 14;
+            float availH = rootH - boardTop - powerH - 24, availW = 1080 - 40 - 32;
+            float cell = Mathf.Min(availW / puzzle.Cols, availH / puzzle.Rows, 190f);
             float bw = cell * puzzle.Cols, bh = cell * puzzle.Rows;
             var boardHolder = UI.Node(root, "Board");
-            float boardCenterY = -(chipsBottom + 30 + availH / 2);
-            UI.Place(boardHolder, 0.5f, 1, 0, boardCenterY, bw + 70, bh + 70);
-            var frame = UI.Sliced(boardHolder, "frame_" + ThemeKey(d.theme), 140, "Frame");
-            UI.Stretch(frame.rectTransform, -50, -50, -50, -50);
-            frame.pixelsPerUnitMultiplier = frame.sprite != null ? frame.sprite.border.x / 70f : 1f;
-            var panel = UI.Sliced(boardHolder, "card_b", 150, "Panel");
+            float boardCenterY = -(boardTop + (availH + 24) / 2);
+            UI.Place(boardHolder, 0.5f, 1, 0, boardCenterY, bw + 36, bh + 36);
+            var panel = UI.Round(boardHolder, Color.white, 34, "Panel");
             UI.Stretch(panel.rectTransform);
-            panel.color = new Color(1f, 0.98f, 0.93f, 1f);
+            panel.gameObject.AddComponent<Shadow>().effectColor = new Color(0, 0, 0, 0.25f);
             var gridRt = UI.Node(boardHolder, "Grid");
             UI.Place(gridRt, 0.5f, 0.5f, 0, 0, bw, bh);
             g.Grid = gridRt.gameObject.AddComponent<WordGridView>();
             g.Grid.Build(puzzle, cell);
             g.Grid.OnWordFound = OnWordFound;
             g.Grid.OnWrong = () => { };
+            g.Grid.OnSelection = (text, color) =>
+            {
+                if (g.CurrentPill == null) return;
+                if (text == null) { g.CurrentPill.gameObject.SetActive(false); return; }
+                g.CurrentPill.gameObject.SetActive(true);
+                g.CurrentText.text = text;
+                g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, text.Length * 38 + 100), 72);
+            };
             Fx.PopIn(boardHolder, 0.4f);
 
-            // --- banner for mystery prompt ---
+            // --- banner for the mystery prompt (sits over the word list once all words are found) ---
             g.Banner = UI.Node(root, "Banner");
-            UI.Place(g.Banner, 0.5f, 0, 0, powerH + 50, 900, 120);
-            var bi = UI.Sliced(g.Banner, "ribbon_pink", 120, "Bg"); bi.preserveAspect = false; bi.type = Image.Type.Simple; UI.Stretch(bi.rectTransform);
-            g.BannerText = UI.Label(g.Banner, "", 38, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.BannerText.rectTransform, 30, 8, 190, 0);
-            g.SkipButton = UI.Pill(g.Banner, "btn_grey", "SKIP", 170, 76, SkipMystery, 34);
-            UI.Place((RectTransform)g.SkipButton.transform, 1, 0.5f, -120, 6, 170, 76);
+            UI.Place(g.Banner, 0.5f, 1, 0, -(listTop + 66), 1000, 120);
+            var bi = UI.Img(g.Banner, "ribbon_pink", "Bg"); bi.preserveAspect = false; UI.Stretch(bi.rectTransform);
+            g.BannerText = UI.Label(g.Banner, "", 36, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.BannerText.rectTransform, 70, 8, 270, 0);
+            g.SkipButton = UI.Pill(g.Banner, "btn_grey", "SKIP", 170, 72, SkipMystery, 34);
+            UI.Place((RectTransform)g.SkipButton.transform, 1, 0.5f, -150, 4, 170, 72);
             g.Banner.gameObject.SetActive(false);
 
             // --- power-ups ---
@@ -143,42 +157,34 @@ namespace WordQuest
             UpdateProgress(false);
         }
 
-        float BuildChips(RectTransform root, float top)
+        /// <summary>Light panel with the words in columns. Returns the bottom y of the panel.</summary>
+        float BuildWordList(RectTransform root, float top)
         {
-            var g = game; var words = g.Puzzle.Words;
-            var holder = UI.Node(root, "Chips");
-            UI.Place(holder, 0.5f, 1, 0, -top, 1000, 10);
-            // measure
-            float maxW = 1000, chipH = 64, gap = 12, size = words.Count > 11 ? 28 : 32;
-            var items = new List<(string word, float w)>();
-            foreach (var w in words) items.Add((w.Word, Mathf.Max(110, w.Word.Length * size * 0.62f + 44)));
-            if (g.Puzzle.Mystery != null) items.Add(("?", Mathf.Max(110, g.Puzzle.Mystery.Word.Length * size * 0.62f + 44)));
-            var rows = new List<List<(string word, float w)>> { new List<(string word, float w)>() };
-            float cur = 0;
-            foreach (var it in items)
+            var g = game;
+            var words = g.Puzzle.Words.Select(w => w.Word).ToList();
+            if (g.Puzzle.Mystery != null) words.Add("?");
+            int n = words.Count;
+            int cols = n <= 6 ? 2 : n <= 12 ? 3 : 4;
+            int rows = Mathf.CeilToInt(n / (float)cols);
+            float rowH = n > 12 ? 44f : 52f, padY = 18;
+            float w = 1000, h = rows * rowH + padY * 2;
+            var panel = UI.Round(root, new Color(0.96f, 0.97f, 0.99f, 0.96f), 30, "WordList");
+            UI.Place(panel.rectTransform, 0.5f, 1, 0, -(top + h / 2), w, h);
+            int fontSize = n > 12 ? 30 : 36;
+            for (int i = 0; i < n; i++)
             {
-                if (cur + it.w > maxW && rows[rows.Count - 1].Count > 0) { rows.Add(new List<(string word, float w)>()); cur = 0; }
-                rows[rows.Count - 1].Add(it); cur += it.w + gap;
+                int r = i / cols, c = i % cols;
+                bool mystery = words[i] == "?";
+                var cell = UI.Node(panel.transform, "W_" + words[i]);
+                float cw = (w - 40) / cols;
+                UI.Place(cell, 0, 1, 20 + cw * (c + 0.5f), -(padY + rowH * (r + 0.5f)), cw, rowH);
+                string label = mystery ? new string('?', g.Puzzle.Mystery.Word.Length) : words[i];
+                var t = UI.Label(cell, label, fontSize, mystery ? Palette.Purple : Color.black, TextAnchor.MiddleCenter, false);
+                UI.Stretch(t.rectTransform);
+                if (mystery) { g.MysteryChip = cell; cell.gameObject.AddComponent<Pulse>().Amount = 0.04f; }
+                else g.Chips[words[i]] = cell;
             }
-            for (int r = 0; r < rows.Count; r++)
-            {
-                float rowW = rows[r].Sum(i => i.w) + gap * (rows[r].Count - 1);
-                float x = -rowW / 2;
-                foreach (var it in rows[r])
-                {
-                    bool mystery = it.word == "?";
-                    var chip = UI.Sliced(holder, "chip", chipH, "Chip_" + it.word);
-                    chip.color = mystery ? new Color(0.72f, 0.55f, 1f) : new Color(1f, 1f, 1f, 0.92f);
-                    UI.Place(chip.rectTransform, 0.5f, 1, x + it.w / 2, -(r * (chipH + gap) + chipH / 2), it.w, chipH);
-                    string label = mystery ? new string('?', g.Puzzle.Mystery.Word.Length) : it.word;
-                    var t = UI.Label(chip.transform, label, (int)size, mystery ? Color.white : Palette.Ink, TextAnchor.MiddleCenter, mystery);
-                    UI.Stretch(t.rectTransform);
-                    if (mystery) { g.MysteryChip = chip.rectTransform; chip.gameObject.AddComponent<Pulse>().Amount = 0.03f; }
-                    else g.Chips[it.word] = chip.rectTransform;
-                    x += it.w + gap;
-                }
-            }
-            return top + rows.Count * (chipH + gap) + 6;
+            return top + h;
         }
 
         void BuildPowerBar(RectTransform root, float h)
@@ -253,18 +259,25 @@ namespace WordQuest
                 StartCoroutine(MysteryRoutine(p, isNew));
                 return;
             }
-            // chip: green + check + strike
+            // keep the found word visible in the pill between the list and the board
+            if (g.CurrentPill != null)
+            {
+                g.CurrentPill.gameObject.SetActive(true);
+                g.CurrentText.text = p.Word;
+                var lc = grid.LastColor;
+                g.CurrentPill.color = new Color(Mathf.Lerp(lc.r, 0.5f, 0.2f), Mathf.Lerp(lc.g, 0.5f, 0.2f), Mathf.Lerp(lc.b, 0.5f, 0.2f), 1f);
+                g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, p.Word.Length * 38 + 100), 72);
+                Fx.Punch(g.CurrentPill.rectTransform, 0.15f, 0.3f);
+            }
+            // strike the word through in the list
             if (g.Chips.TryGetValue(p.Word, out var chip))
             {
-                var img = chip.GetComponent<Image>(); img.color = new Color(0.62f, 0.9f, 0.66f, 0.95f);
-                var t = chip.GetComponentInChildren<Text>(); t.color = new Color(0.25f, 0.45f, 0.3f);
-                var strike = UI.Solid(chip, new Color(0.2f, 0.4f, 0.25f, 0.9f), "Strike");
+                var t = chip.GetComponentInChildren<Text>(); t.color = new Color(0.55f, 0.57f, 0.63f);
+                var strike = UI.Solid(chip, new Color(0.2f, 0.22f, 0.3f, 0.95f), "Strike");
                 UI.Place(strike.rectTransform, 0.5f, 0.5f, 0, 0, 0, 5);
-                float full = chip.sizeDelta.x - 40;
+                float full = t.preferredWidth + 10;
                 Fx.Tween(0.3f, k => { if (strike != null) strike.rectTransform.sizeDelta = new Vector2(full * k, 5); });
                 Fx.Punch(chip, 0.18f, 0.35f);
-                Vector2 chipPos = fxLayer.InverseTransformPoint(chip.position);
-                Fx.Burst(fxLayer, chipPos, "spark_star", Palette.Green, 5, 220f, 0.5f, 30f);
             }
             Fx.FloatText(fxLayer, midPos, isNew ? "NEW WORD!" : "+1 WORD", isNew ? Palette.Yellow : Color.white, 48);
             UpdateProgress(true);
@@ -348,9 +361,10 @@ namespace WordQuest
             if (sub != null) Destroy(sub.gameObject);
             if (g.MysteryChip != null)
             {
-                var chip = g.MysteryChip; var img = chip.GetComponent<Image>(); img.color = new Color(1f, 0.85f, 0.3f);
+                var chip = g.MysteryChip;
                 var pu = chip.GetComponent<Pulse>(); if (pu != null) Destroy(pu);
-                chip.GetComponentInChildren<Text>().text = target; chip.GetComponentInChildren<Text>().color = Palette.Ink;
+                var mt = chip.GetComponentInChildren<Text>(); mt.text = target; mt.color = new Color(0.55f, 0.57f, 0.63f);
+                var strike = UI.Solid(chip, new Color(0.2f, 0.22f, 0.3f, 0.95f), "Strike"); UI.Place(strike.rectTransform, 0.5f, 0.5f, 0, 0, mt.preferredWidth + 10, 5);
             }
             UpdateProgress(true);
             g.Busy = false; g.Grid.InputEnabled = true;

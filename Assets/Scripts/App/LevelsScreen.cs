@@ -23,7 +23,7 @@ namespace WordQuest
             bar.Set(done / (float)Levels.Total);
             var bt = UI.Label(bar.Root, $"{done} / {Levels.Total} levels completed", 30, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(bt.rectTransform);
             var stars = UI.Icon(head, "star", 60, "Star"); UI.Place(stars.rectTransform, 0.5f, 1, 340, -140, 60, 60);
-            var stl = UI.Label(head, Progress.TotalStars().ToString(), 40, Color.white, TextAnchor.MiddleLeft, true); UI.Place(stl.rectTransform, 0.5f, 1, 425, -140, 120, 50);
+            var stl = UI.Label(head, Progress.TotalStars().ToString(), 40, Color.white, TextAnchor.MiddleLeft, true); UI.PlaceL(stl.rectTransform, 0.5f, 1, 380, -140, 120, 50);
 
             RectTransform content;
             var sr = Scroll(b, out content);

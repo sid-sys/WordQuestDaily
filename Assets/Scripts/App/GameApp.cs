@@ -260,13 +260,13 @@ namespace WordQuest
             bar.anchoredPosition = new Vector2(0, -12); bar.sizeDelta = new Vector2(0, 130);
 
             // avatar + level
-            var av = Avatar(bar, d.avatar, d.ring, 116);
-            UI.Place(av, 0, 0.5f, 90, 0, 116, 116);
+            var av = Avatar(bar, d.avatar, d.ring, 110);
+            UI.Place(av, 0, 0.5f, 76, 0, 110, 110);
             UI.Click(av.GetComponent<Image>(), () => ShowTab(Tab.Profile));
             var lvl = UI.Label(bar, "LV " + d.playerLevel, 34, Color.white, TextAnchor.MiddleLeft, true);
-            UI.Place(lvl.rectTransform, 0, 0.5f, 240, 26, 200, 44);
+            UI.PlaceL(lvl.rectTransform, 0, 0.5f, 150, 26, 200, 44);
             var xp = UI.ProgressBar(bar, 240, 34, Palette.Blue, "Xp");
-            UI.Place(xp.Root, 0, 0.5f, 240, -22, 240, 34);
+            UI.Place(xp.Root, 0, 0.5f, 270, -22, 240, 34);
             xp.Set(Progress.XpFraction);
             var xpl = UI.Label(xp.Root, $"{d.xp}/{Economy.XpForLevel(d.playerLevel)}", 22, Color.white, TextAnchor.MiddleCenter);
             UI.Stretch(xpl.rectTransform);
@@ -287,6 +287,7 @@ namespace WordQuest
         {
             var root = UI.Node(parent, "Avatar");
             root.sizeDelta = new Vector2(size, size);
+            var rootImg = root.gameObject.AddComponent<Image>(); rootImg.color = new Color(0, 0, 0, 0);
             var img = UI.Img(root, "av_" + Mathf.Clamp(avatar, 0, 11), "Face", true);
             UI.Stretch(img.rectTransform, size * 0.06f, size * 0.06f, size * 0.06f, size * 0.06f);
             if (ring > 0)

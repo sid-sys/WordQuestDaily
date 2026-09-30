@@ -18,7 +18,9 @@ namespace WordQuest
         public float Cell;
         public Action<Placement, Vector2Int, Vector2Int> OnWordFound;   // placement, start, end
         public Action OnWrong;
+        public Action<string, Color> OnSelection;   // text being swiped (null when released)
         public bool InputEnabled = true;
+        public Color LastColor = Color.white;
 
         RectTransform rt, letterLayer, capsuleLayer, markLayer;
         Text[] letters;
@@ -63,7 +65,8 @@ namespace WordQuest
             Puzzle = p; Cell = cell; cols = p.Cols; rows = p.Rows;
             rt = (RectTransform)transform;
             rt.sizeDelta = new Vector2(cols * cell, rows * cell);
-            var hit = gameObject.GetComponent<Image>() ?? gameObject.AddComponent<Image>();
+            var hit = gameObject.GetComponent<Image>();
+            if (hit == null) hit = gameObject.AddComponent<Image>();
             hit.color = new Color(0, 0, 0, 0); hit.raycastTarget = true;
             capsuleLayer = UI.Stretch(UI.Node(rt, "Capsules"));
             markLayer = UI.Stretch(UI.Node(rt, "Marks"));
@@ -72,7 +75,7 @@ namespace WordQuest
             for (int y = 0; y < rows; y++)
                 for (int x = 0; x < cols; x++)
                 {
-                    var t = UI.Label(letterLayer, p.At(x, y).ToString(), Mathf.RoundToInt(cell * 0.56f), Palette.Ink, TextAnchor.MiddleCenter);
+                    var t = UI.Label(letterLayer, p.At(x, y).ToString(), Mathf.RoundToInt(cell * 0.66f), Color.black, TextAnchor.MiddleCenter);
                     var r = t.rectTransform;
                     r.anchorMin = r.anchorMax = new Vector2(0, 1); r.pivot = new Vector2(0.5f, 0.5f);
                     r.anchoredPosition = CellCenter(x, y); r.sizeDelta = new Vector2(cell, cell);
@@ -87,7 +90,7 @@ namespace WordQuest
         Image MakeCapsule(Transform parent, Color c, string name)
         {
             var img = UI.Sliced(parent, "btn_white", Cell * 0.8f, name);
-            img.color = c;
+            img.color = new Color(c.r, c.g, c.b, c.a * 0.82f);
             var r = img.rectTransform; r.anchorMin = r.anchorMax = new Vector2(0, 1);
             return img;
         }
@@ -123,7 +126,7 @@ namespace WordQuest
             if (!CellAt(e, out var c, out _)) return;
             dragging = true; start = end = c; lastLen = 1;
             live.gameObject.SetActive(true);
-            live.color = new Color(1f, 1f, 1f, 0.85f);
+            live.color = new Color(1f, 0.85f, 0.25f, 0.95f);
             UpdateLive();
             Sfx.Tick(0);
             Pop(c.x, c.y);
@@ -167,6 +170,7 @@ namespace WordQuest
         {
             if (!dragging) return;
             dragging = false;
+            OnSelection?.Invoke(null, Color.white);
             Release();
         }
 
@@ -197,7 +201,12 @@ namespace WordQuest
             return list;
         }
 
-        void UpdateLive() { PlaceCapsule(live.rectTransform, start, end); live.rectTransform.localScale = Vector3.one; }
+        void UpdateLive()
+        {
+            PlaceCapsule(live.rectTransform, start, end); live.rectTransform.localScale = Vector3.one;
+            var cells = Path(start, end);
+            OnSelection?.Invoke(new string(cells.Select(c => Puzzle.At(c.x, c.y)).ToArray()), live.color);
+        }
 
         void Pop(int x, int y)
         {
@@ -238,13 +247,14 @@ namespace WordQuest
             {
                 if (r == null) return;
                 r.localScale = new Vector3(Mathf.Lerp(1f, 0.15f, t), Mathf.Lerp(1f, 0.6f, t), 1);
-                img.color = new Color(1, 1, 1, 0.85f * (1 - t));
+                img.color = new Color(1f, 0.85f, 0.25f, 0.95f * (1 - t));
             }, () => { if (img != null) img.gameObject.SetActive(false); });
         }
 
         // ---------------- found words ----------------
         public void LockWord(Placement p, Color color, bool animate)
         {
+            LastColor = color;
             var cap = MakeCapsule(capsuleLayer, color, "Found_" + p.Word);
             var a = new Vector2Int(p.X, p.Y); var b = p.End;
             PlaceCapsule(cap.rectTransform, a, b);
@@ -253,7 +263,6 @@ namespace WordQuest
             foreach (var c in path)
             {
                 lockedCells.Add(c.y * cols + c.x);
-                letters[c.y * cols + c.x].color = Color.white;
             }
             if (animate)
             {

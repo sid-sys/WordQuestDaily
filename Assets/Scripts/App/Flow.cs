@@ -17,9 +17,9 @@ namespace WordQuest
             var c = p.Content;
 
             var icon = UI.Icon(c, cat.ArtKey, 190, "Cat"); UI.Place(icon.rectTransform, 0.5f, 1, -280, -130, 190, 190);
-            var name = UI.Label(c, cat.Name.ToUpper(), 56, Palette.Ink, TextAnchor.MiddleLeft); UI.Place(name.rectTransform, 0.5f, 1, 130, -90, 520, 70);
-            var diff = UI.Label(c, Levels.DiffName(spec.Diff).ToUpper(), 40, Levels.DiffColor(spec.Diff), TextAnchor.MiddleLeft); UI.Place(diff.rectTransform, 0.5f, 1, 130, -150, 520, 50);
-            var size = UI.Label(c, $"{spec.Cols} x {spec.Rows} board  -  {spec.WordCount} words + mystery", 30, Palette.InkSoft, TextAnchor.MiddleLeft); UI.Place(size.rectTransform, 0.5f, 1, 130 + 40, -204, 640, 40);
+            var name = UI.Label(c, cat.Name.ToUpper(), 56, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(name.rectTransform, 0.5f, 1, -150, -90, 540, 70);
+            var diff = UI.Label(c, Levels.DiffName(spec.Diff).ToUpper(), 40, Levels.DiffColor(spec.Diff), TextAnchor.MiddleLeft); UI.PlaceL(diff.rectTransform, 0.5f, 1, -150, -150, 540, 50);
+            var size = UI.Label(c, $"{spec.Cols} x {spec.Rows} board  -  {spec.WordCount} words + mystery", 30, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(size.rectTransform, 0.5f, 1, -150, -204, 600, 40);
 
             // stars / objectives
             var goals = new[] { $"Find all {spec.WordCount} words", "Find the Mystery Word", "Win without power-ups" };
@@ -28,7 +28,7 @@ namespace WordQuest
                 bool got = !spec.IsDaily && d.stars[spec.Index] > i;
                 var s = UI.Icon(c, got ? "star" : "star_empty", 78, "S" + i);
                 UI.Place(s.rectTransform, 0.5f, 1, -350, -350 - i * 96, 78, 78);
-                var t = UI.Label(c, goals[i], 40, Palette.Ink, TextAnchor.MiddleLeft); UI.Place(t.rectTransform, 0.5f, 1, 60, -350 - i * 96, 700, 60);
+                var t = UI.Label(c, goals[i], 40, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(t.rectTransform, 0.5f, 1, -290, -350 - i * 96, 600, 60);
                 int bonus = Economy.StarBonus(i + 1);
                 if (!spec.IsDaily && bonus > 0) { var bt = UI.Label(c, "+" + bonus, 34, Palette.Orange, TextAnchor.MiddleRight); UI.Place(bt.rectTransform, 1, 1, -60, -350 - i * 96, 130, 50); }
             }
@@ -37,10 +37,10 @@ namespace WordQuest
             int coins = spec.IsDaily ? 50 : Economy.BaseCoins(spec.Diff);
             bool replay = !spec.IsDaily && d.stars[spec.Index] > 0;
             if (replay) coins = Mathf.RoundToInt(coins * Economy.ReplayFactor);
-            var rw = UI.Sliced(c, "chip", 90, "Reward"); rw.color = new Color(1f, 0.92f, 0.6f);
+            var rw = UI.Sliced(c, "btn_white", 90, "Reward"); rw.color = new Color(1f, 0.92f, 0.6f);
             UI.Place(rw.rectTransform, 0.5f, 1, 0, -690, 640, 96);
             var ci = UI.Icon(rw.transform, "coin", 76, "C"); UI.Place(ci.rectTransform, 0, 0.5f, 60, 0, 76, 76);
-            var ct = UI.Label(rw.transform, replay ? $"{coins} coins (replay)" : $"{coins}+ coins", 42, Palette.Ink, TextAnchor.MiddleLeft); UI.Place(ct.rectTransform, 0, 0.5f, 130 + 200, 0, 400, 56);
+            var ct = UI.Label(rw.transform, replay ? $"{coins} coins (replay)" : $"{coins}+ coins", 42, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(ct.rectTransform, 0, 0.5f, 120, 0, 500, 56);
 
             // power-ups you own
             var ph = UI.Label(c, "YOUR POWER-UPS", 36, Palette.InkSoft); UI.Place(ph.rectTransform, 0.5f, 1, 0, -790, 700, 46);
@@ -90,10 +90,10 @@ namespace WordQuest
             // coins + xp row
             var row = UI.Sliced(c, "card_a", 150, "Rewards"); UI.Place(row.rectTransform, 0.5f, 1, 0, -y - 90, 800, 170);
             var ci = UI.Icon(row.transform, "coin", 100, "C"); UI.Place(ci.rectTransform, 0, 0.5f, 100, 14, 100, 100);
-            var coinT = UI.Label(row.transform, "+0", 64, Palette.Orange, TextAnchor.MiddleLeft, false); UI.Place(coinT.rectTransform, 0, 0.5f, 340, 14, 300, 80);
+            var coinT = UI.Label(row.transform, "+0", 64, Palette.Orange, TextAnchor.MiddleLeft, false); UI.PlaceL(coinT.rectTransform, 0, 0.5f, 170, 14, 300, 80);
             int coinTotal = spec.IsDaily ? r.Coins : r.Coins + 0;
             var xi = UI.Icon(row.transform, "xp", 84, "X"); UI.Place(xi.rectTransform, 1, 0.5f, -270, 14, 84, 84);
-            var xpT = UI.Label(row.transform, "+" + r.Xp + " XP", 44, Palette.Blue, TextAnchor.MiddleLeft, false); UI.Place(xpT.rectTransform, 1, 0.5f, -130, 14, 220, 60);
+            var xpT = UI.Label(row.transform, "+" + r.Xp + " XP", 44, Palette.Blue, TextAnchor.MiddleLeft, false); UI.PlaceL(xpT.rectTransform, 1, 0.5f, -215, 14, 210, 60);
             var xb = UI.ProgressBar(row.transform, 500, 30, Palette.Blue, "Xp"); UI.Place(xb.Root, 0.5f, 0, 0, 20, 700, 30); xb.Root.sizeDelta = new Vector2(700, 30); xb.Set(Progress.XpFraction);
             var xl = UI.Label(xb.Root, $"LEVEL {d.playerLevel}", 22, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(xl.rectTransform);
             Fx.CountUp(coinT, 0, coinTotal, "+{0}", 0.9f);

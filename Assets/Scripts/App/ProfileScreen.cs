@@ -54,10 +54,10 @@ namespace WordQuest
                 var ic = UI.Icon(row, a.Art, 120, "Medal"); UI.Place(ic.rectTransform, 0, 0.5f, 90, 0, 120, 120);
                 bool claimed = d.achievementClaimed[i], ready = Progress.AchievementReady(i);
                 if (!claimed && !ready) ic.color = new Color(0.6f, 0.6f, 0.6f, 0.9f);
-                var n = UI.Label(row, a.Name, 40, Palette.Ink, TextAnchor.MiddleLeft); UI.Place(n.rectTransform, 0, 1, 470, -42, 560, 50);
-                var ds = UI.Label(row, a.Desc, 28, Palette.InkSoft, TextAnchor.MiddleLeft); UI.Place(ds.rectTransform, 0, 1, 470, -88, 560, 38);
+                var n = UI.Label(row, a.Name, 40, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(n.rectTransform, 0, 1, 180, -42, 520, 50);
+                var ds = UI.Label(row, a.Desc, 28, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(ds.rectTransform, 0, 1, 180, -88, 520, 38);
                 int val = Mathf.Min(a.Value(d), a.Goal);
-                var pb = UI.ProgressBar(row, 420, 34, Palette.Green, "P"); UI.Place(pb.Root, 0, 0, 340, 26, 420, 34); pb.Set(val / (float)a.Goal);
+                var pb = UI.ProgressBar(row, 420, 34, Palette.Green, "P"); UI.Place(pb.Root, 0, 0, 390, 26, 420, 34); pb.Set(val / (float)a.Goal);
                 var pt = UI.Label(pb.Root, $"{val}/{a.Goal}", 22, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(pt.rectTransform);
                 if (ready)
                 {
@@ -152,13 +152,13 @@ namespace WordQuest
         {
             var r = RowAt(content, ref y, 90);
             var t = UI.Label(r, text, 48, Color.white, TextAnchor.MiddleLeft, true);
-            UI.Place(t.rectTransform, 0, 0.5f, 250, 0, 500, 60);
+            UI.PlaceL(t.rectTransform, 0, 0.5f, 20, 0, 600, 60);
         }
 
         void ShowNameEdit()
         {
             var p = OpenPopup("YOUR NAME", 900, 640);
-            var box = UI.Sliced(p.Content, "chip", 110, "Box", true); UI.Place(box.rectTransform, 0.5f, 1, 0, -130, 700, 120);
+            var box = UI.Sliced(p.Content, "btn_white", 110, "Box", true); UI.Place(box.rectTransform, 0.5f, 1, 0, -130, 700, 120);
             var input = box.gameObject.AddComponent<InputField>();
             var txt = UI.Label(box.transform, "", 46, Palette.Ink, TextAnchor.MiddleCenter); UI.Stretch(txt.rectTransform, 20, 0, 20, 0);
             var ph = UI.Label(box.transform, "Type your name", 42, Palette.Grey, TextAnchor.MiddleCenter); UI.Stretch(ph.rectTransform, 20, 0, 20, 0);
