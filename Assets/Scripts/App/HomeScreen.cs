@@ -146,6 +146,9 @@ namespace WordQuest
         float timerTick;
         void Update()
         {
+#if WQ_ADMOB
+            AdMobService.Tick();
+#endif
             if (dailyTimer != null)
             {
                 timerTick += Time.unscaledDeltaTime;

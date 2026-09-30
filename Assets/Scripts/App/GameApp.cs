@@ -62,6 +62,11 @@ namespace WordQuest
                 else if (Progress.CanClaimDailyReward()) StartCoroutine(AfterFrames(2, ShowDailyReward));
             });
             Progress.Changed += OnProgressChanged;
+            Iap.Init();
+            Iap.Delivered += () => { RefreshCoinPills(); Toast("Thank you! Purchase complete.", Palette.Green); Sfx.Play(Sfx.Kind.Coin); };
+#if WQ_ADMOB
+            AdMobService.Init();
+#endif
         }
 
         IEnumerator AfterFrames(int n, Action a) { for (int i = 0; i < n; i++) yield return null; a?.Invoke(); }
