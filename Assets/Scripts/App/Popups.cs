@@ -30,7 +30,7 @@ namespace WordQuest
 
             p.Card = UI.Node(p.Root, "Card");
             UI.Place(p.Card, 0.5f, 0.5f, 0, -20, w, h);
-            var card = UI.Sliced(p.Card, "popup", 260, "Panel", true);
+            var card = UI.Sliced(p.Card, PopupBody(ribbon), 260, "Panel", true);
             UI.Stretch(card.rectTransform);
             p.Content = UI.Node(p.Card, "Content");
             UI.Stretch(p.Content, 36, 36, 36, 96);
@@ -39,21 +39,49 @@ namespace WordQuest
             {
                 var rb = UI.Img(p.Card, ribbon, "Title");
                 rb.preserveAspect = false;
-                UI.Place(rb.rectTransform, 0.5f, 1, 0, 6, Mathf.Min(w - 40, 720), 130);
+                UI.Place(rb.rectTransform, 0.5f, 1, 0, 14, Mathf.Min(w - 30, 700), 160);
                 var t = UI.Label(rb.transform, title, 54, Color.white, TextAnchor.MiddleCenter, true);
-                UI.Place(t.rectTransform, 0.5f, 0.5f, 0, 6, 560, 90);
+                t.GetComponent<Outline>().effectColor = RibbonOutline(ribbon);
+                UI.Place(t.rectTransform, 0.5f, 0.5f, 0, 14, 480, 80);
                 t.resizeTextForBestFit = true; t.resizeTextMinSize = 30; t.resizeTextMaxSize = 54;
                 t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
             }
             if (closable)
             {
-                var x = UI.Icon(p.Card, "rb_close", 96, "Close");
-                UI.Place(x.rectTransform, 1, 1, -16, -16, 96, 96);
+                var x = UI.GlyphButton(p.Card, "g_close", Palette.Red, 84, "Close");
+                UI.Place(x.rectTransform, 1, 1, -22, -22, 84, 84);
                 UI.Click(x, p.Close);
             }
             popups.Add(p);
             Fx.PopIn(p.Card, 0.32f);
             return p;
+        }
+
+        static string PopupBody(string ribbon)
+        {
+            switch (ribbon)
+            {
+                case "ribbon_orange": case "ribbon_yellow": return "popup_cream";
+                case "ribbon_pink": case "ribbon_red": return "popup_pink";
+                case "ribbon_green": case "ribbon_teal": return "popup_mint";
+                case "ribbon_purple": return "popup_lilac";
+                default: return "popup";
+            }
+        }
+
+        static Color RibbonOutline(string ribbon)
+        {
+            switch (ribbon)
+            {
+                case "ribbon_orange": return new Color32(0x9A, 0x4A, 0x08, 255);
+                case "ribbon_yellow": return new Color32(0x9A, 0x6A, 0x00, 255);
+                case "ribbon_pink": return new Color32(0x9C, 0x1F, 0x63, 255);
+                case "ribbon_red": return new Color32(0x92, 0x1B, 0x2A, 255);
+                case "ribbon_green": return new Color32(0x1E, 0x6B, 0x25, 255);
+                case "ribbon_teal": return new Color32(0x0B, 0x6A, 0x66, 255);
+                case "ribbon_purple": return new Color32(0x4C, 0x24, 0x9A, 255);
+                default: return new Color32(0x12, 0x4F, 0x9A, 255);
+            }
         }
 
         public void ClosePopup(Popup p)
@@ -161,8 +189,8 @@ namespace WordQuest
                 float x = -rowW / 2 + tw / 2 + col * (tw + gx);
                 var tile = UI.Sliced(p.Content, i == 6 ? "card_b" : "card_a", 200, "Day" + (i + 1), false);
                 bool current = i == day && can, done = i < day || (i == day && !can);
-                if (current) tile.color = new Color(1f, 0.93f, 0.55f);
-                if (done) tile.color = new Color(0.8f, 0.95f, 0.8f);
+                if (current) UI.ApplyStyle(tile, "card_gold", 200);
+                if (done) UI.ApplyStyle(tile, "card_green", 200);
                 UI.Place(tile.rectTransform, 0.5f, 1, x, -150 - row * (th + gy) - th / 2, tw, th);
                 var head = UI.Label(tile.transform, "DAY " + (i + 1), 28, Palette.Ink);
                 UI.Place(head.rectTransform, 0.5f, 1, 0, -44, 120, 36);

@@ -42,6 +42,8 @@ namespace WordQuest
             return list;
         }
 
+        public static string DaysLeftText() { int n = Mathf.Max(1, 7 - DaysIntoWeek); return n + (n == 1 ? " day left" : " days left"); }
+
         public static int DaysIntoWeek => (int)(Clock.Today - DateTime.Parse(Clock.WeekKey)).TotalDays;
 
         public static List<Row> Standings()

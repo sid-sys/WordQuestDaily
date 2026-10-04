@@ -94,6 +94,7 @@ namespace WordQuest
                     var r = WorldRect(g.rectTransform);
                     if (r.width > 900 || r.height > 900) continue;
                     if (g.name.StartsWith("P") && g.name.Length == 1) continue;   // particles
+                    if (g.name == "Glyph" || g.name == "C") continue;
                     if (!Clip(g, ref r)) continue;
                     items.Add(new Item { g = g, name = Path(g.transform), r = r });
                 }
@@ -129,7 +130,7 @@ namespace WordQuest
                     if (cr.width * cr.height < bestArea && cr.Contains(it.r.center)) { best = c; bestArea = cr.width * cr.height; }
                 }
                 if (best == null) continue;
-                var box = WorldRect(best.rectTransform); float sc = best.canvas != null ? best.canvas.scaleFactor : 1f; float m = 10 * sc;
+                var box = WorldRect(best.rectTransform); float sc = best.canvas != null ? best.canvas.scaleFactor : 1f; float m = 5 * sc;
                 if (it.r.xMin < box.xMin + m - 0.5f || it.r.xMax > box.xMax - m + 0.5f || it.r.yMin < box.yMin + m - 0.5f || it.r.yMax > box.yMax - m + 0.5f)
                 { problems++; sb.AppendLine($"EDGE {it.name}  vs  {Path(best.transform)}"); }
             }

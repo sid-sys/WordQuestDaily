@@ -56,6 +56,30 @@ def reading_order(items, rows):
     return out
 
 
+def main_cells(sheet, cols, rows, names):
+    """Cut by equal grid cells: everything solid inside a cell belongs to that item (for symbols made of several parts)."""
+    im = Image.open(SHEETS / f"{sheet}.png").convert("RGBA")
+    arr = np.array(im); H, W = arr.shape[:2]
+    OUT.mkdir(parents=True, exist_ok=True)
+    for i, name in enumerate(names):
+        r, c = divmod(i, cols)
+        x0, x1, y0, y1 = int(c * W / cols), int((c + 1) * W / cols), int(r * H / rows), int((r + 1) * H / rows)
+        cell = arr[y0:y1, x0:x1].copy()
+        m = ndi.binary_closing(cell[:, :, 3] > 150, iterations=3)
+        lab, n = ndi.label(m)
+        if n == 0: continue
+        sizes = ndi.sum(m, lab, range(1, n + 1))
+        keep = np.isin(lab, [k + 1 for k, sz in enumerate(sizes) if sz > 0.01 * m.size])
+        grow = ndi.binary_dilation(keep, iterations=6)
+        ys, xs = np.where(keep)
+        pad = 8
+        bx0, by0, bx1, by1 = max(0, xs.min() - pad), max(0, ys.min() - pad), min(cell.shape[1], xs.max() + 1 + pad), min(cell.shape[0], ys.max() + 1 + pad)
+        crop = cell[by0:by1, bx0:bx1].copy(); g = grow[by0:by1, bx0:bx1]
+        crop[~g, 3] = 0
+        a = crop[:, :, 3].astype(np.int32); crop[:, :, 3] = np.where(a < 20, 0, a).astype(np.uint8)
+        Image.fromarray(crop).save(OUT / f"{name}.png"); print(f"{name}: {crop.shape[1]}x{crop.shape[0]}")
+
+
 def main(sheet, cols, rows, names):
     im = Image.open(SHEETS / f"{sheet}.png").convert("RGBA")
     arr = np.array(im)
@@ -79,4 +103,5 @@ def main(sheet, cols, rows, names):
 
 if __name__ == "__main__":
     s, c, r, n = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), sys.argv[4].split(",")
-    main(s, c, r, n)
+    if len(sys.argv) > 5 and sys.argv[5] == "cells": main_cells(s, c, r, n)
+    else: main(s, c, r, n)

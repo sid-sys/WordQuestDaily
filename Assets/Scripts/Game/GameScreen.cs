@@ -89,22 +89,12 @@ namespace WordQuest
             Btn("btn_blue", "HOME", 2, () => { CloseAllPopups(); EndGame(); ShowTab(Tab.Home); });
         }
 
-        /// <summary>Round pause button drawn in code (two bars).</summary>
+        /// <summary>Pause button: orange icon tile with the pause symbol.</summary>
         RectTransform MakePauseButton(Transform parent, float size, Action onClick)
         {
-            var root = UI.Node(parent, "Pause");
-            root.sizeDelta = new Vector2(size, size);
-            var rim = UI.Node(root, "Rim").gameObject.AddComponent<Image>(); rim.sprite = Shapes.Circle(); rim.color = new Color32(0x1B, 0x5F, 0xA8, 255); UI.Stretch(rim.rectTransform); rim.raycastTarget = true;
-            var face = UI.Node(root, "Face").gameObject.AddComponent<Image>(); face.sprite = Shapes.Circle(); face.color = Palette.Blue; UI.Stretch(face.rectTransform, size * 0.06f, size * 0.06f, size * 0.06f, size * 0.06f); face.raycastTarget = false;
-            var gloss = UI.Node(root, "Gloss").gameObject.AddComponent<Image>(); gloss.sprite = Shapes.Circle(); gloss.color = new Color(1, 1, 1, 0.18f); gloss.raycastTarget = false;
-            UI.Place(gloss.rectTransform, 0.5f, 0.5f, 0, size * 0.14f, size * 0.62f, size * 0.36f);
-            for (int i = 0; i < 2; i++)
-            {
-                var bar = UI.Round(root, Color.white, 6, "Bar" + i);
-                UI.Place(bar.rectTransform, 0.5f, 0.5f, (i == 0 ? -1 : 1) * size * 0.14f, 0, size * 0.15f, size * 0.42f);
-            }
-            UI.Click(rim, onClick);
-            return root;
+            var b = UI.GlyphButton(parent, "g_pause", Palette.Orange, size, "Pause");
+            UI.Click(b, onClick);
+            return b.rectTransform;
         }
 
         // =============== layout ===============
@@ -129,11 +119,11 @@ namespace WordQuest
             // --- two progress bars side by side: this level, and the word collection ---
             g.LevelBar = UI.ProgressBar(root, 520, 44, Palette.Green, "LevelBar");
             UI.Place(g.LevelBar.Root, 0, 1, 40 + 260, -168, 520, 44);
-            g.LevelBarText = UI.Label(g.LevelBar.Root, "", 28, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.LevelBarText.rectTransform);
+            g.LevelBarText = UI.Label(g.LevelBar.Root, "", 28, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(g.LevelBarText.rectTransform);
             var colIcon = UI.Icon(root, cat.ArtKey, 52, "CatIcon"); UI.Place(colIcon.rectTransform, 0, 1, 600 + 26, -168, 52, 52);
             g.CollectionBar = UI.ProgressBar(root, 380, 38, Palette.Blue, "CollectionBar");
             UI.Place(g.CollectionBar.Root, 0, 1, 660 + 190, -168, 380, 38);
-            g.CollectionText = UI.Label(g.CollectionBar.Root, "", 24, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.CollectionText.rectTransform);
+            g.CollectionText = UI.Label(g.CollectionBar.Root, "", 24, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(g.CollectionText.rectTransform);
 
             // --- word list: plain bold words in a light panel, struck through when found ---
             float listTop = 206;
@@ -180,7 +170,7 @@ namespace WordQuest
                 g.Dragging = text != null;
                 if (text != null)
                 {
-                    g.CurrentText.text = text; g.CurrentPill.color = color;
+                    g.CurrentText.text = text; UI.SetBodyColor(g.CurrentPill, color);
                     g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, text.Length * 34 + 110), 76);
                 }
                 UpdateSlot();
@@ -212,7 +202,7 @@ namespace WordQuest
             g.CurrentPill.gameObject.SetActive(showPill);
             if (showPill && !g.Dragging)
             {
-                g.CurrentText.text = g.PillText; g.CurrentPill.color = g.PillColor;
+                g.CurrentText.text = g.PillText; UI.SetBodyColor(g.CurrentPill, g.PillColor);
                 g.CurrentPill.rectTransform.sizeDelta = new Vector2(Mathf.Max(240, g.PillText.Length * 34 + 110), 76);
             }
         }
@@ -228,7 +218,7 @@ namespace WordQuest
             int rows = Mathf.CeilToInt(n / (float)cols);
             float rowH = (n > 12 ? 44f : 52f) * scale, padY = 18 * scale;
             float w = 1000, h = rows * rowH + padY * 2;
-            var panel = UI.Round(root, new Color(0.96f, 0.97f, 0.99f, 0.96f), 30, "WordList");
+            var panel = UI.Sliced(root, "card_a", h, "WordList");
             UI.Place(panel.rectTransform, 0.5f, 1, 0, -(top + h / 2), w, h);
             int fontSize = Mathf.RoundToInt((n > 12 ? 30 : 36) * scale);
             for (int i = 0; i < n; i++)

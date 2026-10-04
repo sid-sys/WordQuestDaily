@@ -30,7 +30,7 @@ namespace WordQuest
             float top = starsH + wordsH + mysteryH + rewardH + gap + collH;
             float bottom = 112 + (canDouble ? 96 + 18 : 0) + (spec.IsDaily ? 80 + 18 : 0);
             float h = top + bottom + 30 + 36 + 96 + 36;
-            var p = OpenPopup(spec.IsDaily ? "DAILY COMPLETE!" : "LEVEL COMPLETE!", 900, h, false, "ribbon_pink");
+            var p = OpenPopup(spec.IsDaily ? "DAILY COMPLETE!" : "LEVEL COMPLETE!", 900, h, false, "ribbon_orange");
             var c = p.Content;
             float y = 0;
 
@@ -70,7 +70,7 @@ namespace WordQuest
                 int f = Progress.Found(game.Puzzle.CategoryIndex), tot = Progress.TotalIn(game.Puzzle.CategoryIndex);
                 var cbi = UI.Icon(c, cat.ArtKey, 70, "CI"); UI.Place(cbi.rectTransform, 0.5f, 1, -330, -(y + collH / 2), 70, 70);
                 var cb = UI.ProgressBar(c, 640, 44, Palette.Green, "Coll"); UI.Place(cb.Root, 0.5f, 1, 60, -(y + collH / 2), 640, 44); cb.Root.sizeDelta = new Vector2(640, 44); cb.Set(f / (float)tot);
-                var cl = UI.Label(cb.Root, $"{cat.Name}  {f}/{tot}", 26, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(cl.rectTransform);
+                var cl = UI.Label(cb.Root, $"{cat.Name}  {f}/{tot}", 26, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(cl.rectTransform);
             }
 
             // buttons (from the bottom up)

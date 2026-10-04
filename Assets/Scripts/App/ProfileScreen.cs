@@ -26,7 +26,7 @@ namespace WordQuest
             var edit = UI.Icon(hr, "scroll", 60, "Edit"); UI.Place(edit.rectTransform, 0.5f, 1, name.preferredWidth / 2 + 60, -335, 60, 60);
             UI.Click(edit, ShowNameEdit);
             var bar = UI.ProgressBar(hr, 700, 50, Palette.Blue, "Xp"); UI.Place(bar.Root, 0.5f, 0, 0, 56, 700, 50); bar.Set(Progress.XpFraction);
-            var bl = UI.Label(bar.Root, $"LEVEL {d.playerLevel}   {d.xp}/{Economy.XpForLevel(d.playerLevel)} XP", 30, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(bl.rectTransform);
+            var bl = UI.Label(bar.Root, $"LEVEL {d.playerLevel}   {d.xp}/{Economy.XpForLevel(d.playerLevel)} XP", 30, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(bl.rectTransform);
             y += 20;
 
             // ---- stats ----
@@ -58,7 +58,7 @@ namespace WordQuest
                 var ds = UI.Label(row, a.Desc, 28, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(ds.rectTransform, 0, 1, 180, -88, 520, 38);
                 int val = Mathf.Min(a.Value(d), a.Goal);
                 var pb = UI.ProgressBar(row, 420, 34, Palette.Green, "P"); UI.Place(pb.Root, 0, 0, 390, 26, 420, 34); pb.Set(val / (float)a.Goal);
-                var pt = UI.Label(pb.Root, $"{val}/{a.Goal}", 22, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(pt.rectTransform);
+                var pt = UI.Label(pb.Root, $"{val}/{a.Goal}", 22, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(pt.rectTransform);
                 if (ready)
                 {
                     var cb = UI.Pill(row, "btn_yellow", $"+{a.Coins}", 200, 84, () =>

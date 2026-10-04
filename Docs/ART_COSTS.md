@@ -42,3 +42,9 @@ about $5.50 for the same sprites (110 x $0.05).
 The extra $0.80 is 17 duplicate sheets (made in the first run, before the tutorial hand was added): a first background run was believed to have stopped, but it kept
 running next to the second one, so every sheet was made twice. `gen_art.py` now skips sheets that already
 exist unless `--force` is given, so this cannot happen again.
+
+## Candy UI redesign (October)
+
+The whole UI was redrawn in a bright candy style. All of these used **quality: low** and sprite sheets
+(GPT Image 1.5 low: $0.009 for 1024x1024, $0.013 for 1536x1024 or 1024x1536):
+21 images, **$0.273**. Total for the project: **57 images, $1.961**.

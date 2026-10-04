@@ -13,7 +13,7 @@ namespace WordQuest
         {
             var d = SaveSystem.Data;
             var p = OpenPopup(daily ? "TODAY'S RANKING" : League.Tiers[d.leagueTier].ToUpper() + " LEAGUE", 980, 1560, true, daily ? "ribbon_pink" : "ribbon_green");
-            var sub = UI.Label(p.Content, daily ? "Everybody plays the same puzzle" : $"{7 - League.DaysIntoWeek} days left  -  Top 3 move up, bottom 5 move down", 30, Palette.InkSoft);
+            var sub = UI.Label(p.Content, daily ? "Everybody plays the same puzzle" : $"{League.DaysLeftText()}  -  Top 3 move up, bottom 5 move down", 30, Palette.InkSoft);
             UI.Place(sub.rectTransform, 0.5f, 1, 0, -40, 880, 44);
             var tabs = UI.Stretch(UI.Node(p.Content, "Tabs"));
             var t1 = UI.Pill(tabs, daily ? "btn_grey" : "btn_green", "THIS WEEK", 380, 80, () => { p.Close(); ShowLeague(false); }, 34);
@@ -30,9 +30,9 @@ namespace WordQuest
             {
                 var row = ListRow(content, ref y, 116, 880);
                 var bg = row.GetChild(0).GetComponent<Image>();
-                if (r.IsYou) { bg.color = new Color(1f, 0.93f, 0.55f); youY = y - 130; }
-                else if (!daily && r.Rank <= 3) bg.color = new Color(0.82f, 0.96f, 0.82f);
-                else if (!daily && r.Rank > 15) bg.color = new Color(1f, 0.85f, 0.85f);
+                if (r.IsYou) { UI.ApplyStyle(bg, "card_gold", 116); youY = y - 130; }
+                else if (!daily && r.Rank <= 3) UI.ApplyStyle(bg, "card_green", 116);
+                else if (!daily && r.Rank > 15) UI.ApplyStyle(bg, "card_red", 116);
                 string medal = r.Rank == 1 ? "crown" : r.Rank <= 3 ? "trophy" : null;
                 if (medal != null) { var m = UI.Icon(row, medal, 70, "M"); UI.Place(m.rectTransform, 0, 0.5f, 60, 0, 70, 70); }
                 else { var n = UI.Label(row, r.Rank.ToString(), 40, Palette.InkSoft); UI.Place(n.rectTransform, 0, 0.5f, 60, 0, 90, 50); }
@@ -63,9 +63,9 @@ namespace WordQuest
             var root = UI.Stretch(UI.Node(popupLayer, "Splash"));
             var bg = UI.Img(root, "brand_splash", "Bg", true); bg.preserveAspect = false; UI.Stretch(bg.rectTransform);
             var fit = bg.gameObject.AddComponent<AspectRatioFitter>(); fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent; fit.aspectRatio = 1024f / 1536f;
-            var mark = UI.Img(root, "logo_mark", "Mark"); UI.Place(mark.rectTransform, 0.5f, 0.5f, 0, 260, 520, 600);
-            var title = UI.Label(root, "WORD QUEST", 130, Color.white, TextAnchor.MiddleCenter, true); UI.Place(title.rectTransform, 0.5f, 0.5f, 0, -120, 1000, 150);
-            var sub = UI.Label(root, "DAILY", 90, Palette.Yellow, TextAnchor.MiddleCenter, true); UI.Place(sub.rectTransform, 0.5f, 0.5f, 0, -240, 700, 110);
+            var mark = UI.Img(root, "logo_mark", "Mark"); UI.Place(mark.rectTransform, 0.5f, 0.5f, 0, 190, 560, 560);
+            var title = UI.Label(root, "WORD QUEST", 124, new Color32(0x1E, 0x8F, 0xE8, 255), TextAnchor.MiddleCenter, true); title.GetComponent<Outline>().effectColor = Color.white; title.GetComponent<Outline>().effectDistance = new Vector2(5, -5); UI.Place(title.rectTransform, 0.5f, 0.5f, 0, -170, 1000, 150);
+            var sub = UI.Label(root, "DAILY", 92, new Color32(0xFF, 0x8A, 0x1B, 255), TextAnchor.MiddleCenter, true); sub.GetComponent<Outline>().effectColor = Color.white; sub.GetComponent<Outline>().effectDistance = new Vector2(5, -5); UI.Place(sub.rectTransform, 0.5f, 0.5f, 0, -285, 700, 110);
             var bar = UI.ProgressBar(root, 600, 46, Palette.Green, "Loading"); UI.Place(bar.Root, 0.5f, 0, 0, 240, 600, 46);
             var cg = root.gameObject.AddComponent<CanvasGroup>();
             Fx.PopIn(mark.rectTransform, 0.6f);

@@ -172,7 +172,7 @@ namespace WordQuest
             UI.Place(tabBar, 0.5f, 0, 0, 100, 1040, 160);
             var bar = UI.Sliced(tabBar, "navbar", 160, "Bar");
             UI.Stretch(bar.rectTransform);
-            var glow = UI.Sliced(tabBar, "btn_green", 132, "Glow");
+            var glow = UI.Sliced(tabBar, "btn_orange", 132, "Glow");
             tabGlow = glow.rectTransform;
             tabGlow.anchorMin = tabGlow.anchorMax = new Vector2(0, 0.5f);
             tabGlow.sizeDelta = new Vector2(236, 132);
@@ -188,7 +188,8 @@ namespace WordQuest
                 var icon = UI.Icon(cell, TabArt[i], 68, "Icon");
                 icon.raycastTarget = false;
                 UI.Place(icon.rectTransform, 0.5f, 0.5f, 0, 20, 68, 68);
-                var label = UI.Label(cell, TabNames[i].ToUpper(), 23, Color.white, TextAnchor.MiddleCenter, false);
+                var label = UI.Label(cell, TabNames[i].ToUpper(), 23, Palette.Ink, TextAnchor.MiddleCenter, true);
+                label.GetComponent<Outline>().effectColor = UI.PillOutline("btn_orange");
                 UI.Place(label.rectTransform, 0.5f, 0.5f, 0, -42, 236, 26);
                 tabIcons.Add(icon.rectTransform); tabTexts.Add(label); tabImgs.Add(icon);
             }
@@ -205,8 +206,9 @@ namespace WordQuest
             for (int i = 0; i < tabIcons.Count; i++)
             {
                 bool on = i == idx;
-                tabImgs[i].color = on ? Color.white : new Color(1, 1, 1, 0.62f);
-                tabTexts[i].color = on ? Color.white : new Color(1, 1, 1, 0.62f);
+                tabImgs[i].color = on ? Color.white : new Color(1, 1, 1, 0.9f);
+                tabTexts[i].color = on ? Color.white : Palette.Ink;
+                tabTexts[i].GetComponent<Outline>().enabled = on;
             }
             // red dot on Collection or Profile when a reward is waiting
             bool dot = false; int dotTab = 2;
@@ -266,16 +268,16 @@ namespace WordQuest
             var pill = UI.Sliced(parent, "chip", 84, "CoinPill", true);
             var rt = pill.rectTransform; rt.sizeDelta = new Vector2(300, 84);
             var coin = UI.Icon(rt, "coin", 62, "Coin");
-            UI.Place(coin.rectTransform, 0, 0.5f, 44, 0, 62, 62);
-            var t = UI.Label(rt, SaveSystem.Data.coins.ToString("N0"), 40, Color.white, TextAnchor.MiddleCenter);
-            UI.Stretch(t.rectTransform, 84, 0, plus ? 84 : 28, 0);
+            UI.Place(coin.rectTransform, 0, 0.5f, 52, 0, 60, 60);
+            var t = UI.Label(rt, SaveSystem.Data.coins.ToString("N0"), 40, new Color32(0xB5, 0x55, 0x0A, 255), TextAnchor.MiddleCenter);
+            UI.Stretch(t.rectTransform, 84, 0, plus ? 100 : 28, 0);
             t.resizeTextForBestFit = true; t.resizeTextMinSize = 22; t.resizeTextMaxSize = 40;
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
             coinDisplays.Add(new CoinDisplay { T = t, Shown = SaveSystem.Data.coins, Pill = rt });
             if (plus)
             {
-                var p = UI.Icon(rt, "rb_plus", 60, "Plus");
-                UI.Place(p.rectTransform, 1, 0.5f, -44, 0, 60, 60);
+                var p = UI.GlyphButton(rt, "g_plus", Palette.Green, 62, "Plus");
+                UI.Place(p.rectTransform, 1, 0.5f, -46, 0, 62, 62);
                 UI.Click(p, () => ShowShop());
             }
             UI.Click(pill, () => ShowShop());
@@ -307,15 +309,15 @@ namespace WordQuest
             var xp = UI.ProgressBar(bar, 240, 34, Palette.Blue, "Xp");
             UI.Place(xp.Root, 0, 0.5f, 270, -22, 240, 34);
             xp.Set(Progress.XpFraction);
-            var xpl = UI.Label(xp.Root, $"{d.xp}/{Economy.XpForLevel(d.playerLevel)}", 22, Color.white, TextAnchor.MiddleCenter);
+            var xpl = UI.Label(xp.Root, $"{d.xp}/{Economy.XpForLevel(d.playerLevel)}", 22, Palette.Ink, TextAnchor.MiddleCenter);
             UI.Stretch(xpl.rectTransform);
 
             var cp = CoinPill(bar);
             UI.Place(cp, 1, 0.5f, gear ? -290 : -180, 0, 300, 82);
             if (gear)
             {
-                var g = UI.Icon(bar, "rb_gear", 92, "Gear");
-                UI.Place(g.rectTransform, 1, 0.5f, -70, 0, 92, 92);
+                var g = UI.GlyphButton(bar, "g_gear", Palette.Blue, 90, "Gear");
+                UI.Place(g.rectTransform, 1, 0.5f, -70, 0, 90, 90);
                 UI.Click(g, ShowSettings);
             }
             return bar;
@@ -370,8 +372,7 @@ namespace WordQuest
         // =============== toast ===============
         public void Toast(string text, Color? color = null)
         {
-            var bubble = UI.Sliced(toastLayer, "chip", 100, "Toast");
-            bubble.color = new Color(0.08f, 0.12f, 0.28f, 0.95f);
+            var bubble = UI.Sliced(toastLayer, "btn_navy", 100, "Toast");
             var t = UI.Label(bubble.transform, text, 38, color ?? Color.white, TextAnchor.MiddleCenter, false);
             float w = Mathf.Clamp(t.preferredWidth + 90, 320, 960);
             bubble.rectTransform.sizeDelta = new Vector2(w, 100);

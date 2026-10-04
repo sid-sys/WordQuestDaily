@@ -22,3 +22,10 @@ Tools/_raw/
 ExportedObj/
 sysinfo.txt
 *.log
+
+# signing keys and passwords: never commit
+Keystore/
+KEYSTORE-INFO.txt
+*.jks
+*.p12
+*.pem

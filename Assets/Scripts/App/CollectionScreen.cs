@@ -18,7 +18,7 @@ namespace WordQuest
             int all = WordBank.All.Sum(c => c.Words.Length), have = Progress.TotalDiscovered();
             var bar = UI.ProgressBar(head, 820, 52, Palette.Green, "All");
             UI.Place(bar.Root, 0.5f, 1, 0, -140, 820, 52); bar.Set(have / (float)all);
-            var bt = UI.Label(bar.Root, $"{have} / {all} words discovered", 30, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(bt.rectTransform);
+            var bt = UI.Label(bar.Root, $"{have} / {all} words discovered", 30, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(bt.rectTransform);
 
             RectTransform content;
             var sr = Scroll(b, out content);
@@ -36,7 +36,7 @@ namespace WordQuest
                 int f = Progress.Found(cat), tot = Progress.TotalIn(cat);
                 var pb = UI.ProgressBar(row, 520, 46, Palette.Green, "P"); UI.Place(pb.Root, 0, 0.5f, 230 + 260, -4, 520, 46);
                 pb.Set(f / (float)tot);
-                var pt = UI.Label(pb.Root, $"{f} / {tot}", 28, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(pt.rectTransform);
+                var pt = UI.Label(pb.Root, $"{f} / {tot}", 28, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(pt.rectTransform);
                 int step = Progress.ClaimableStep(cat);
                 if (step >= 0)
                 {
@@ -60,7 +60,7 @@ namespace WordQuest
             var p = OpenPopup(c.Name.ToUpper(), 980, 1500);
             int f = Progress.Found(cat), tot = Progress.TotalIn(cat);
             var bar = UI.ProgressBar(p.Content, 780, 50, Palette.Green, "P"); UI.Place(bar.Root, 0.5f, 1, 0, -40, 780, 50); bar.Set(f / (float)tot);
-            var bt = UI.Label(bar.Root, $"{f} / {tot} words", 30, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(bt.rectTransform);
+            var bt = UI.Label(bar.Root, $"{f} / {tot} words", 30, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(bt.rectTransform);
             RectTransform content;
             var sr = Scroll(p.Content, out content);
             UI.Stretch((RectTransform)sr.transform, 0, 0, 0, 100);
@@ -75,7 +75,7 @@ namespace WordQuest
                 float cw = Mathf.Max(120, txt.Length * 30 + 50);
                 if (x + cw > w0) { x = 0; y += rowH + 10; }
                 var chip = UI.Sliced(content, "btn_white", 70, "Chip");
-                chip.color = got ? new Color(0.75f, 0.95f, 0.78f) : new Color(1, 1, 1, 0.85f);
+                UI.SetBodyColor(chip, got ? new Color(0.75f, 0.95f, 0.78f) : Color.white);
                 UI.Place(chip.rectTransform, 0.5f, 1, -w0 / 2 + x + cw / 2, -(y + rowH / 2), cw, 72);
                 var t = UI.Label(chip.transform, txt, 32, got ? Palette.Ink : Palette.Grey, TextAnchor.MiddleCenter); UI.Stretch(t.rectTransform);
                 x += cw + 12;

@@ -21,7 +21,7 @@ namespace WordQuest
             var bar = UI.ProgressBar(head, 720, 52, Palette.Green, "Total");
             UI.Place(bar.Root, 0.5f, 1, -70, -140, 720, 52);
             bar.Set(done / (float)Levels.Total);
-            var bt = UI.Label(bar.Root, $"{done} / {Levels.Total} levels completed", 30, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(bt.rectTransform);
+            var bt = UI.Label(bar.Root, $"{done} / {Levels.Total} levels completed", 30, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(bt.rectTransform);
             var stars = UI.Icon(head, "star", 60, "Star"); UI.Place(stars.rectTransform, 0.5f, 1, 340, -140, 60, 60);
             var stl = UI.Label(head, Progress.TotalStars().ToString(), 40, Color.white, TextAnchor.MiddleLeft, true); UI.PlaceL(stl.rectTransform, 0.5f, 1, 380, -140, 120, 50);
 
@@ -37,20 +37,20 @@ namespace WordQuest
                 var spec = Levels.Get(first);
                 var hr = RowAt(content, ref y, 170);
                 var rib = UI.Img(hr, ch % 2 == 0 ? "ribbon_green" : "ribbon_pink", "Ch"); rib.preserveAspect = false;
-                UI.Place(rib.rectTransform, 0.5f, 0.5f, 0, 10, 800, 120);
+                UI.Place(rib.rectTransform, 0.5f, 0.5f, 0, 8, 900, 150);
                 var ct = UI.Label(rib.transform, $"CHAPTER {ch + 1}: {Levels.ChapterName(first).ToUpper()}", 42, Color.white, TextAnchor.MiddleCenter, true);
-                UI.Stretch(ct.rectTransform, 40, 6, 40, 0);
+                UI.Stretch(ct.rectTransform, 110, 16, 110, 0);
                 var dt = UI.Label(hr, $"{Levels.DiffName(spec.Diff)}  -  {spec.Cols}x{spec.Rows} boards", 30, Color.white, TextAnchor.MiddleCenter, true);
                 UI.Place(dt.rectTransform, 0.5f, 0, 0, 20, 700, 40);
                 for (int r = 0; r < 5; r++)
                 {
-                    var row = RowAt(content, ref y, 230);
+                    var row = RowAt(content, ref y, 256);
                     for (int c = 0; c < 5; c++)
                     {
                         int lv = first + r * 5 + c;
                         if (lv > Levels.Total) break;
                         BuildNode(row, lv, (c - 2) * 196f, cur);
-                        if (lv == cur) curY = y - 230;
+                        if (lv == cur) curY = y - 256;
                     }
                 }
                 y += 20;
@@ -71,11 +71,6 @@ namespace WordQuest
             UI.Place(n.rectTransform, 0.5f, 1, x, -85, size, size);
             var t = UI.Label(n.transform, isCur ? lv.ToString() : "", 58, Palette.Ink, TextAnchor.MiddleCenter, false);
             UI.Stretch(t.rectTransform, 0, 8, 0, 0);
-            if (done || isCur)
-            {
-                var num = t;
-                if (done && !isCur) { var ck = n; num.text = lv.ToString(); }
-            }
             if (isCur)
             {
                 var ring = UI.Img(row, "spark_ring", "Pulse"); ring.color = new Color(1, 1, 0.7f, 0.9f);
@@ -85,7 +80,7 @@ namespace WordQuest
             if (!isCur)
             {
                 var nb = UI.Label(row, lv.ToString(), 34, Color.white, TextAnchor.MiddleCenter, true);
-                UI.Place(nb.rectTransform, 0.5f, 1, x, locked ? -178 : -226, 120, 40);
+                UI.Place(nb.rectTransform, 0.5f, 1, x, locked ? -190 : -232, 120, 36);
             }
             if (!locked)
             {

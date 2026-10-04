@@ -9,7 +9,7 @@ namespace WordQuest
 {
     public static class Palette
     {
-        public static readonly Color Ink = new Color32(0x1B, 0x2A, 0x49, 255);        // main dark text
+        public static readonly Color Ink = new Color32(0x22, 0x36, 0x78, 255);        // main dark text
         public static readonly Color InkSoft = new Color32(0x5B, 0x6B, 0x8C, 255);
         public static readonly Color Navy = new Color32(0x18, 0x24, 0x4A, 255);
         public static readonly Color Cream = new Color32(0xFF, 0xF8, 0xE6, 255);
@@ -24,12 +24,11 @@ namespace WordQuest
         public static readonly Color Teal = new Color32(0x1F, 0xB5, 0xA8, 255);
         public static readonly Color Grey = new Color32(0xA9, 0xB3, 0xC7, 255);
 
-        /// <summary>Bright colors for the found-word capsules.</summary>
+        /// <summary>Capsule colors taken from the reference picture: yellow, purple, green, blue, magenta, red.</summary>
         public static readonly Color[] Capsules =
         {
-            new Color32(0xFF, 0x3B, 0x5C, 255), new Color32(0x1E, 0x90, 0xFF, 255), new Color32(0x22, 0xC5, 0x5E, 255),
-            new Color32(0x8B, 0x3D, 0xFF, 255), new Color32(0xFF, 0x9F, 0x1C, 255), new Color32(0x12, 0xC8, 0xE6, 255),
-            new Color32(0xFF, 0x4F, 0xA0, 255), new Color32(0xF5, 0xC4, 0x00, 255),
+            new Color32(0xF9, 0xBB, 0x13, 255), new Color32(0x92, 0x4E, 0xF3, 255), new Color32(0x41, 0xC0, 0x38, 255),
+            new Color32(0x17, 0x8A, 0xDC, 255), new Color32(0xE0, 0x52, 0xD6, 255), new Color32(0xF1, 0x4D, 0x53, 255),
         };
     }
 
@@ -163,48 +162,82 @@ namespace WordQuest
             return img;
         }
 
-        static readonly Dictionary<string, Color> PillColors = new Dictionary<string, Color>
+        struct PillDef { public Color Rim, Body; public bool Gloss; }
+        static PillDef PD(string rim, string body, bool gloss)
         {
-            { "btn_green", new Color32(0x3C, 0xC2, 0x5A, 255) }, { "btn_yellow", new Color32(0xFF, 0xC8, 0x2E, 255) },
-            { "btn_blue", new Color32(0x2F, 0x9B, 0xF5, 255) }, { "btn_red", new Color32(0xF0, 0x4B, 0x4B, 255) },
-            { "btn_purple", new Color32(0x8E, 0x5B, 0xE8, 255) }, { "btn_grey", new Color32(0xA9, 0xB3, 0xC7, 255) },
-            { "btn_white", new Color32(0xF4, 0xF6, 0xFB, 255) }, { "btn_navy", new Color32(0x18, 0x24, 0x4A, 255) },
-            { "btn_orange", new Color32(0xFF, 0x8A, 0x2B, 255) }, { "btn_pink", new Color32(0xFF, 0x5F, 0x9E, 255) },
-            { "chip", new Color32(0x1B, 0x27, 0x4D, 235) }, { "navbar", new Color32(0x14, 0x1E, 0x44, 245) },
-            { "track", new Color32(0x14, 0x1E, 0x3F, 255) }, { "fill", new Color32(0x3C, 0xC2, 0x5A, 255) },
+            ColorUtility.TryParseHtmlString(rim, out var r); ColorUtility.TryParseHtmlString(body, out var b);
+            return new PillDef { Rim = r, Body = b, Gloss = gloss };
+        }
+        static readonly Dictionary<string, PillDef> PillDefs = new Dictionary<string, PillDef>
+        {
+            { "btn_green", PD("#FFF3C9", "#4CC93A", true) }, { "btn_yellow", PD("#FFF3C9", "#FFC32A", true) },
+            { "btn_blue", PD("#FFF3C9", "#2E9BF5", true) }, { "btn_red", PD("#FFF3C9", "#F25555", true) },
+            { "btn_purple", PD("#FFF3C9", "#9358F0", true) }, { "btn_orange", PD("#FFF3C9", "#FF8A2B", true) },
+            { "btn_pink", PD("#FFF3C9", "#FF5FA8", true) }, { "btn_grey", PD("#F1F3F8", "#B7C0D4", true) },
+            { "btn_white", PD("#DDE8F8", "#FFFFFF", false) }, { "btn_navy", PD("#FFF3C9", "#26346B", true) },
+            { "chip", PD("#FFFFFF", "#FFFAE6", false) }, { "navbar", PD("#FFFFFF", "#FFFBEA", false) },
+            { "track", PD("#FFFFFF", "#E1EEFD", false) }, { "fill", PD("#00000000", "#4CC93A", true) },
         };
 
-        public static bool IsPillKey(string key) => key != null && PillColors.ContainsKey(key);
+        public static bool IsPillKey(string key) => key != null && PillDefs.ContainsKey(key);
+
+        /// <summary>Darker shade of a pill's body color, used for the text outline on buttons.</summary>
+        public static Color PillOutline(string key)
+        {
+            if (!PillDefs.TryGetValue(key ?? "", out var d)) return new Color(0.05f, 0.1f, 0.25f, 0.85f);
+            Color.RGBToHSV(d.Body, out var h, out var sat, out var v);
+            return Color.HSVToRGB(h, Mathf.Min(1f, sat + 0.15f), v * 0.5f);
+        }
+
+        /// <summary>Changes the colored body of a pill or tile (the rim keeps its color).</summary>
+        public static void SetBodyColor(Image img, Color c)
+        {
+            var body = img.transform.Find("Body");
+            if (body != null) body.GetComponent<Image>().color = c; else img.color = c;
+        }
 
         /// <summary>Gives an Image the look of `key`: exact pills and cards are drawn in code, everything else uses painted art.</summary>
         public static void ApplyStyle(Image img, string key, float height = 100f)
         {
             img.type = Image.Type.Sliced; img.preserveAspect = false;
             var fit = img.GetComponent<SliceFitter>();
-            var gloss = img.transform.Find("Gloss");
             if (IsPillKey(key))
             {
-                img.sprite = Shapes.Pill(); img.color = PillColors[key];
+                var def = PillDefs[key];
+                img.sprite = Shapes.FlatPill(); img.color = def.Rim;
                 if (fit == null) fit = img.gameObject.AddComponent<SliceFitter>();
                 fit.Mode = SliceFitter.Kind.Pill;
-                bool wantGloss = key.StartsWith("btn_") || key == "fill";
-                if (wantGloss && gloss == null)
+                float rimPx = def.Rim.a < 0.01f ? 0f : Mathf.Clamp(height * 0.085f, 4f, 10f);
+                var bodyT = img.transform.Find("Body");
+                Image bodyImg;
+                if (bodyT == null)
                 {
-                    var g = Node(img.transform, "Gloss");
+                    var bn = Node(img.transform, "Body"); bodyT = bn;
+                    bodyImg = bn.gameObject.AddComponent<Image>();
+                    bodyImg.sprite = Shapes.PillBody(); bodyImg.type = Image.Type.Sliced; bodyImg.raycastTarget = false;
+                    bn.gameObject.AddComponent<SliceFitter>().Mode = SliceFitter.Kind.Pill;
+                    bn.SetAsFirstSibling();
+                }
+                else bodyImg = bodyT.GetComponent<Image>();
+                var br = (RectTransform)bodyT; br.anchorMin = Vector2.zero; br.anchorMax = Vector2.one; br.offsetMin = new Vector2(rimPx, rimPx); br.offsetMax = new Vector2(-rimPx, -rimPx);
+                bodyImg.color = def.Body;
+                var gloss = bodyT.Find("Gloss");
+                if (def.Gloss && gloss == null)
+                {
+                    var g = Node(bodyT, "Gloss");
                     var gi = g.gameObject.AddComponent<Image>();
                     gi.sprite = Shapes.Gloss(); gi.type = Image.Type.Sliced; gi.raycastTarget = false;
-                    gi.pixelsPerUnitMultiplier = 64f / Mathf.Max(8f, height * 0.40f);
-                    g.anchorMin = new Vector2(0, 0.52f); g.anchorMax = new Vector2(1, 1);
-                    g.offsetMin = new Vector2(height * 0.26f, 0); g.offsetMax = new Vector2(-height * 0.26f, -height * 0.08f);
+                    gi.pixelsPerUnitMultiplier = 64f / Mathf.Max(8f, height * 0.38f);
+                    g.anchorMin = new Vector2(0, 0.55f); g.anchorMax = new Vector2(1, 1);
+                    g.offsetMin = new Vector2(height * 0.24f, 0); g.offsetMax = new Vector2(-height * 0.24f, -height * 0.06f);
                 }
-                else if (!wantGloss && gloss != null) UnityEngine.Object.Destroy(gloss.gameObject);
+                else if (!def.Gloss && gloss != null) UnityEngine.Object.Destroy(gloss.gameObject);
             }
-            else if (key == "card_a" || key == "card_b" || key == "popup")
+            else if (Shapes.IsCardKey(key))
             {
-                bool pop = key == "popup";
-                img.sprite = Shapes.Card(pop ? 1 : 0); img.color = Color.white;
+                img.sprite = Shapes.CardVariant(key); img.color = Color.white;
                 if (fit == null) fit = img.gameObject.AddComponent<SliceFitter>();
-                fit.Mode = SliceFitter.Kind.Card; fit.CardBorder = pop ? 68f : 48f;
+                fit.Mode = SliceFitter.Kind.Card; fit.CardBorder = key.StartsWith("popup") ? 72f : 50f;
             }
             else
             {
@@ -212,6 +245,30 @@ namespace WordQuest
                 if (fit != null) UnityEngine.Object.Destroy(fit);
                 if (img.sprite != null) img.pixelsPerUnitMultiplier = Mathf.Max(0.1f, img.sprite.rect.height / Mathf.Max(1, height));
             }
+        }
+
+        /// <summary>Rounded-square icon button: cream rim, colored glossy body, white symbol (glyph) in the middle.</summary>
+        public static Image GlyphButton(Transform parent, string glyphKey, Color body, float size, string name = "GlyphButton")
+        {
+            var rim = Node(parent, name).gameObject.AddComponent<Image>();
+            rim.sprite = Shapes.TileFlat(); rim.type = Image.Type.Sliced; rim.color = new Color32(0xFF, 0xF3, 0xC9, 255);
+            var rr = rim.rectTransform; rr.sizeDelta = new Vector2(size, size);
+            float inset = Mathf.Clamp(size * 0.075f, 3f, 8f);
+            var b = Node(rim.transform, "Body"); var bi = b.gameObject.AddComponent<Image>();
+            bi.sprite = Shapes.TileBody(); bi.type = Image.Type.Sliced; bi.color = body; bi.raycastTarget = false;
+            Stretch(b, inset, inset, inset, inset);
+            var gl = Node(b, "Gloss"); var gi = gl.gameObject.AddComponent<Image>();
+            gi.sprite = Shapes.TileGloss(); gi.type = Image.Type.Sliced; gi.raycastTarget = false;
+            gl.anchorMin = new Vector2(0, 0.55f); gl.anchorMax = new Vector2(1, 1); gl.offsetMin = new Vector2(size * 0.16f, 0); gl.offsetMax = new Vector2(-size * 0.16f, -size * 0.05f);
+            gi.pixelsPerUnitMultiplier = 64f / Mathf.Max(8f, size * 0.3f);
+            // nine-slice corner size follows the button size
+            rim.pixelsPerUnitMultiplier = 128f / Mathf.Max(8f, size) * 0.9f; bi.pixelsPerUnitMultiplier = 128f / Mathf.Max(8f, size - inset * 2) * 0.9f;
+            var glyph = Img(rim.transform, glyphKey, "Glyph");
+            glyph.rectTransform.anchorMin = glyph.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            glyph.rectTransform.anchoredPosition = new Vector2(0, size * 0.015f);
+            glyph.rectTransform.sizeDelta = new Vector2(size * 0.58f, size * 0.58f);
+            glyph.raycastTarget = false;
+            return rim;
         }
 
         /// <summary>Nine-sliced image. Pills and cards are drawn in code so their corners are exact.</summary>
@@ -269,6 +326,7 @@ namespace WordQuest
             var img = Sliced(parent, spriteKey, h, "Button_" + label, true);
             img.rectTransform.sizeDelta = new Vector2(w, h);
             var t = Label(img.transform, label, fontSize, Color.white, TextAnchor.MiddleCenter, true);
+            var ol = t.GetComponent<Outline>(); if (ol != null) { ol.effectColor = PillOutline(spriteKey); ol.effectDistance = new Vector2(3, -3); }
             Stretch(t.rectTransform, 0, 4, 0, 0);
             return Click(img, onClick);
         }
@@ -295,8 +353,8 @@ namespace WordQuest
                 rt.pivot = new Vector2(0, 0.5f);
                 rt.offsetMin = new Vector2(pad, 3); rt.offsetMax = new Vector2(pad + Mathf.Lerp(0, full, Value), -3);
                 float w = rt.rect.width;
-                Fill.enabled = Value > 0.001f;
-                if (Fill.enabled && w < minW) rt.offsetMax = new Vector2(pad + minW, -3);
+                Fill.gameObject.SetActive(Value > 0.001f);
+                if (Value > 0.001f && w < minW) rt.offsetMax = new Vector2(pad + minW, -3);
             }
             public void Setup(float padding, float min) { pad = padding; minW = min; }
         }
@@ -308,7 +366,7 @@ namespace WordQuest
             var track = Sliced(bar.Root, "track", h, "Track");
             Stretch(track.rectTransform);
             bar.Fill = Sliced(bar.Root, "fill", h - 6, "Fill");
-            if (fillColor.HasValue) bar.Fill.color = fillColor.Value;
+            if (fillColor.HasValue) SetBodyColor(bar.Fill, fillColor.Value);
             bar.Setup(4, h - 8f);
             bar.Set(0);
             return bar;

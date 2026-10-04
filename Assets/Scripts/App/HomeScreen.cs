@@ -27,8 +27,8 @@ namespace WordQuest
             var dqBg = UI.Sliced(dq, "card_b", 300, "Daily");
             UI.Stretch(dqBg.rectTransform);
             var rib = UI.Img(dq, "ribbon_pink", "Ribbon"); rib.preserveAspect = false;
-            UI.Place(rib.rectTransform, 0.5f, 1, 0, 8, 620, 110);
-            var rt = UI.Label(rib.transform, "DAILY QUEST", 50, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(rt.rectTransform, 0, 6, 0, 0);
+            UI.Place(rib.rectTransform, 0.5f, 1, 0, 14, 660, 150);
+            var rt = UI.Label(rib.transform, "DAILY QUEST", 50, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(rt.rectTransform, 60, 18, 60, 0);
             var catArt = UI.Icon(dq, WordBank.Get(q.Category).ArtKey, 190, "Cat"); UI.Place(catArt.rectTransform, 0, 0.5f, 170, -20, 190, 190);
             var theme = UI.Label(dq, Levels.DailyTheme(Clock.Today).ToUpper() + " DAY", 44, Palette.Ink, TextAnchor.MiddleLeft);
             UI.PlaceL(theme.rectTransform, 0, 0.5f, 300, 50, 660, 56);
@@ -92,7 +92,7 @@ namespace WordQuest
             var sh = UI.Icon(lg.transform, "league", 116, "Shield"); UI.Place(sh.rectTransform, 0.5f, 1, 0, -86, 116, 116); sh.color = Color.Lerp(Color.white, League.TierColors[d.leagueTier], 0.45f);
             var lt = UI.Label(lg.transform, League.Tiers[d.leagueTier].ToUpper() + " LEAGUE", 34, Palette.Ink); UI.Place(lt.rectTransform, 0.5f, 1, 0, -174, 440, 44);
             var lr = UI.Label(lg.transform, $"Rank #{League.MyRank}", 30, Palette.InkSoft); UI.Place(lr.rectTransform, 0.5f, 1, 0, -216, 420, 38);
-            var ld = UI.Label(lg.transform, $"{7 - League.DaysIntoWeek} days left", 28, Palette.InkSoft); UI.Place(ld.rectTransform, 0.5f, 1, 0, -254, 420, 36);
+            var ld = UI.Label(lg.transform, League.DaysLeftText(), 28, Palette.InkSoft); UI.Place(ld.rectTransform, 0.5f, 1, 0, -254, 420, 36);
             y += 24;
 
             // ---- today's missions ----
