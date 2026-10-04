@@ -20,7 +20,7 @@ namespace WordQuest.EditorTools
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.allowedAutorotateToLandscapeLeft = false;
             PlayerSettings.allowedAutorotateToLandscapeRight = false;
-            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
+            PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64 | AndroidArchitecture.ARMv7;
@@ -28,8 +28,26 @@ namespace WordQuest.EditorTools
             PlayerSettings.SplashScreen.showUnityLogo = false;
             PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Low);
             ApplyIcons();
+            ApplyNotificationIcons();
             AssetDatabase.SaveAssets();
             Debug.Log("Word Quest: project settings applied");
+        }
+
+        static void ApplyNotificationIcons()
+        {
+            foreach (var path in new[] { "Assets/Art/Icons/notif_small.png", "Assets/Art/Icons/notif_large.png" })
+            {
+                var ti = (TextureImporter)AssetImporter.GetAtPath(path);
+                if (ti == null) continue;
+                ti.textureType = TextureImporterType.Default; ti.isReadable = true; ti.mipmapEnabled = false; ti.npotScale = TextureImporterNPOTScale.None;
+                ti.textureCompression = TextureImporterCompression.Uncompressed; ti.SaveAndReimport();
+            }
+            var small = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Icons/notif_small.png");
+            var large = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Icons/notif_large.png");
+            if (small == null || large == null) return;
+            Unity.Notifications.NotificationSettings.AndroidSettings.ClearDrawableResources();
+            Unity.Notifications.NotificationSettings.AndroidSettings.AddDrawableResource("icon_small", small, Unity.Notifications.NotificationIconType.Small);
+            Unity.Notifications.NotificationSettings.AndroidSettings.AddDrawableResource("icon_large", large, Unity.Notifications.NotificationIconType.Large);
         }
 
         static void ApplyIcons()

@@ -110,9 +110,6 @@ namespace WordQuest
                 }, 30);
                 UI.Place((RectTransform)btn.transform, 0, 0.5f, 100 + i * 200, 0, 190, 100);
             }
-            var lab = RowAt(content, ref y, 130);
-            var labBtn = UI.Pill(lab, "btn_purple", "TEST EFFECTS & SOUNDS", 720, 100, ShowEffectsLab, 38);
-            UI.Place((RectTransform)labBtn.transform, 0.5f, 0.5f, 0, 0, 720, 100);
             EndScroll(content, y);
         }
 

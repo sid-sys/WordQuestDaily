@@ -68,6 +68,11 @@ namespace WordQuest
         public bool sound = true, haptics = true;
         public bool tutorialDone;
         public bool swipeTutorialDone;
+        public bool adFreeKitClaimed;                 // the Ad-Free Plus kit is given only once
+        public bool notifAsked, notifOn = true;
+        public int unfinishedLevel;                   // level that was started but not finished (0 = none)
+        public string unfinishedDate = "";
+        public string lastPlayedDate = "";
         public bool[] powerUnlocked = new bool[5];   // a power-up stays locked until its tutorial is done
         public int sfxStyle;                          // 0 classic, 1 soft, 2 bright
         public string installDate = "";

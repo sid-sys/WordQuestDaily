@@ -41,6 +41,7 @@ namespace WordQuest
             if (game != null) EndGame();
             var puzzle = PuzzleGenerator.Build(spec);
             game = new GameScreen { Spec = spec, Puzzle = puzzle };
+            if (!spec.IsDaily) { SaveSystem.Data.unfinishedLevel = spec.Index; SaveSystem.Data.unfinishedDate = Clock.TodayKey; }
             body.gameObject.SetActive(false); tabBar.gameObject.SetActive(false);
             gameLayer.gameObject.SetActive(true);
             foreach (Transform c in gameLayer) Destroy(c.gameObject);
@@ -89,10 +90,10 @@ namespace WordQuest
             Btn("btn_blue", "HOME", 2, () => { CloseAllPopups(); EndGame(); ShowTab(Tab.Home); });
         }
 
-        /// <summary>Pause button: orange icon tile with the pause symbol.</summary>
+        /// <summary>Pause button: blue tile with a white pause symbol (like the reference).</summary>
         RectTransform MakePauseButton(Transform parent, float size, Action onClick)
         {
-            var b = UI.GlyphButton(parent, "g_pause", Palette.Orange, size, "Pause");
+            var b = UI.GlyphButton(parent, "g_pause", new Color32(0x2F, 0x8D, 0xF0, 255), size, "Pause", 0.52f);
             UI.Click(b, onClick);
             return b.rectTransform;
         }
@@ -105,20 +106,19 @@ namespace WordQuest
             var root = g.Root;
             float rootH = safe.rect.height;
 
-            // --- top bar: pause, title, coins ---
-            MakePauseButton(root, 92, ShowPause);
-            UI.Place((RectTransform)root.Find("Pause"), 0, 1, 70, -62, 92, 92);
-            var title = UI.Label(root, spec.Title, 60, Color.white, TextAnchor.MiddleCenter, true);
-            UI.Place(title.rectTransform, 0.5f, 1, 0, -44, 440, 76);
-            var cat = WordBank.Get(puzzle.CategoryIndex);
-            var catLabel = UI.Label(root, cat.Name.ToUpper(), 30, Color.white, TextAnchor.MiddleCenter, true);
-            UI.Place(catLabel.rectTransform, 0.5f, 1, 0, -100, 440, 40);
+            // --- HUD like the reference: coins left, level pill middle, pause right ---
             var coins = CoinPill(root, false);
-            UI.Place(coins, 1, 1, -40 - 150, -62, 300, 84);
+            UI.Place(coins, 0, 1, 20 + 160, -72, 320, 92);
+            var lvPill = UI.Pill(root, "btn_blue", spec.IsDaily ? "Daily" : "Level " + spec.Index, 330, 84, () => { }, 46);
+            UI.Place((RectTransform)lvPill.transform, 0.5f, 1, 30, -72, 330, 84);
+            lvPill.transition = Selectable.Transition.None;
+            var cat = WordBank.Get(puzzle.CategoryIndex);
+            MakePauseButton(root, 96, ShowPause);
+            UI.Place((RectTransform)root.Find("Pause"), 1, 1, -70, -72, 96, 96);
 
             // --- two progress bars side by side: this level, and the word collection ---
             g.LevelBar = UI.ProgressBar(root, 520, 44, Palette.Green, "LevelBar");
-            UI.Place(g.LevelBar.Root, 0, 1, 40 + 260, -168, 520, 44);
+            UI.Place(g.LevelBar.Root, 0, 1, 40 + 260, -170, 520, 44);
             g.LevelBarText = UI.Label(g.LevelBar.Root, "", 28, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(g.LevelBarText.rectTransform);
             var colIcon = UI.Icon(root, cat.ArtKey, 52, "CatIcon"); UI.Place(colIcon.rectTransform, 0, 1, 600 + 26, -168, 52, 52);
             g.CollectionBar = UI.ProgressBar(root, 380, 38, Palette.Blue, "CollectionBar");
@@ -146,7 +146,7 @@ namespace WordQuest
             g.Banner.gameObject.SetActive(false);
 
             // --- board: a big white card, as wide as the screen allows ---
-            float powerH = 210;
+            float powerH = 230;
             float boardTop = pillY + 76 + 14;
             float availH = rootH - boardTop - powerH - 24, availW = 1080 - 40 - 32;
             float cell = Mathf.Min(availW / puzzle.Cols, availH / puzzle.Rows, 190f);
@@ -240,23 +240,31 @@ namespace WordQuest
         void BuildPowerBar(RectTransform root, float h)
         {
             var g = game; var d = SaveSystem.Data;
+            // dark blue band across the bottom, with a lighter top edge (like the reference)
+            var band = UI.Solid(root, new Color32(0x1B, 0x3E, 0xA6, 255), "PowerBand", true);
+            var br = band.rectTransform; br.anchorMin = new Vector2(0, 0); br.anchorMax = new Vector2(1, 0); br.pivot = new Vector2(0.5f, 0); br.anchoredPosition = Vector2.zero; br.sizeDelta = new Vector2(0, h - 20);
+            var edge = UI.Solid(root, new Color32(0x5C, 0x8E, 0xF0, 255), "PowerEdge");
+            var er = edge.rectTransform; er.anchorMin = new Vector2(0, 0); er.anchorMax = new Vector2(1, 0); er.pivot = new Vector2(0.5f, 0); er.anchoredPosition = new Vector2(0, h - 20); er.sizeDelta = new Vector2(0, 8);
             var bar = UI.Node(root, "PowerBar");
-            UI.Place(bar, 0.5f, 0, 0, h / 2 - 20, 1040, h);
+            UI.Place(bar, 0.5f, 0, 0, (h - 20) / 2f, 1040, h - 20);
+            float tile = 150, gap = (1040 - 5 * tile) / 4f;
             for (int i = 0; i < 5; i++)
             {
-                int idx = i; var pu = PowerUps.All[i];
-                var cell = UI.Node(bar, "Pw" + i);
-                UI.Place(cell, 0, 0.5f, 104 + i * 208, 0, 200, h);
-                var icon = UI.Icon(cell, PowerUps.Art[i], 92, "Icon"); UI.Place(icon.rectTransform, 0.5f, 0.5f, 0, 22, 92, 92);
-                UI.Click(icon, () => UsePower(pu));
-                g.PowerIcons.Add(icon);
-                var badge = UI.Icon(cell, "spark_glow", 42, "Badge"); badge.color = Palette.Red; UI.Place(badge.rectTransform, 0.5f, 0.5f, 44, 52, 42, 42);
-                var cnt = UI.Label(badge.transform, "", 26, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(cnt.rectTransform);
+                var pu = PowerUps.All[i];
+                var btn = UI.GlyphButton(bar, PowerUps.Art[i], new Color32(0x2F, 0x8D, 0xF0, 255), tile, "Pw" + i, 0.78f);
+                UI.Place(btn.rectTransform, 0, 0.5f, tile / 2 + i * (tile + gap), 0, tile, tile);
+                UI.Click(btn, () => UsePower(pu));
+                var glyph = btn.transform.Find("Glyph").GetComponent<Image>();
+                g.PowerIcons.Add(glyph);
+                var rim = UI.Node(btn.transform, "BadgeRim").gameObject.AddComponent<Image>(); rim.sprite = Shapes.Circle(); rim.color = Color.white; rim.raycastTarget = false;
+                rim.rectTransform.anchorMin = rim.rectTransform.anchorMax = new Vector2(1, 0); rim.rectTransform.anchoredPosition = new Vector2(-6, 12); rim.rectTransform.sizeDelta = new Vector2(64, 64);
+                var badge = UI.Node(btn.transform, "Badge").gameObject.AddComponent<Image>();
+                badge.sprite = Shapes.Circle(); badge.color = Palette.Red; badge.raycastTarget = false;
+                badge.rectTransform.anchorMin = badge.rectTransform.anchorMax = new Vector2(1, 0); badge.rectTransform.anchoredPosition = new Vector2(-6, 12); badge.rectTransform.sizeDelta = new Vector2(52, 52);
+                var cnt = UI.Label(badge.transform, "", 30, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(cnt.rectTransform);
+                cnt.GetComponent<Outline>().effectColor = new Color32(0x70, 0x10, 0x20, 255);
                 g.PowerCounts.Add(cnt);
-                var lk = UI.Icon(cell, "lock", 46, "Lock"); UI.Place(lk.rectTransform, 0.5f, 0.5f, 34, -6, 46, 46); g.PowerLocks.Add(lk);
-                var price = UI.Label(cell, PowerUps.Names[i].ToUpper(), 21, Color.white, TextAnchor.MiddleCenter, true);
-                UI.Place(price.rectTransform, 0.5f, 0.5f, 0, -58, 200, 26);
-                price.horizontalOverflow = HorizontalWrapMode.Wrap;
+                var lk = UI.Icon(btn.transform, "lock", 56, "Lock"); UI.Place(lk.rectTransform, 1, 0, -30, 30, 56, 56); g.PowerLocks.Add(lk);
             }
             RefreshPowerBar();
         }
@@ -270,7 +278,7 @@ namespace WordQuest
                 g.PowerCounts[i].text = n > 0 ? n.ToString() : "+";
                 var badge = g.PowerCounts[i].transform.parent.GetComponent<Image>();
                 badge.color = n > 0 ? Palette.Red : Palette.Green;
-                badge.gameObject.SetActive(open);
+                badge.gameObject.SetActive(open); badge.transform.parent.Find("BadgeRim").gameObject.SetActive(open);
                 g.PowerLocks[i].gameObject.SetActive(!open);
                 g.PowerIcons[i].color = !open ? new Color(0.35f, 0.35f, 0.4f, 0.9f) : n > 0 ? Color.white : new Color(1, 1, 1, 0.65f);
             }
@@ -466,8 +474,9 @@ namespace WordQuest
                         break;
                     }
                 case PowerUp.Finder:
+                    // Marks only the letter every remaining word STARTS on: the player still has to find the way it runs.
                     grid.ClearMarks();
-                    grid.MarkWord(target, Palette.Purple);
+                    foreach (var w in g.Puzzle.Words) if (!w.Found) { grid.MarkCell(w.X, w.Y, Palette.Purple, "Finder"); Fx.Burst(fxLayer, grid.CellCanvas(w.X, w.Y, fxLayer), "spark_star", Palette.Purple, 6, 240f, 0.6f); }
                     break;
                 case PowerUp.Word:
                     {

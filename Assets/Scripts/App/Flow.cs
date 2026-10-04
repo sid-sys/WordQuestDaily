@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -111,6 +112,7 @@ namespace WordQuest
                 UI.Place((RectTransform)share.transform, 0.5f, 0, 0, by, 300, 80);
             }
 
+            if (!SaveSystem.Data.notifAsked) DOTween.Sequence().AppendInterval(1.4f).AppendCallback(NotificationService.AskPermission).SetUpdate(true);
             if (r.Coins > 0) Fx.Fly(fxLayer, new Vector2(0, 250), CoinTarget(), "coin", Mathf.Clamp(r.Coins / 25, 3, 10), () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.3f, 0.4f), null, 60f, 1.0f, 0.07f);
             if (r.LevelUps > 0) { Sfx.Play(Sfx.Kind.Level); Fx.Burst(fxLayer, new Vector2(0, 200), "spark_star", Palette.Yellow, 14, 520f, 0.9f, 52f); }
             if (r.Stars == 3) Fx.Confetti(fxLayer, 1000, canvasRt.rect.height / 2 + 40, 30);

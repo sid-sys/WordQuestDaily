@@ -77,6 +77,7 @@ namespace WordQuest
             r.Stars = 1 + (mysteryFound ? 1 : 0) + (powerupsUsed == 0 ? 1 : 0);
             bool daily = spec.IsDaily;
             D.gamesPlayed++;
+            D.unfinishedLevel = 0;
             D.wordsFound += r.WordsFound;
             if (mysteryFound) D.mysteryFound++;
             if (r.Stars == 3) D.perfectLevels++;
@@ -299,6 +300,19 @@ namespace WordQuest
             if (!AchievementReady(i)) return 0;
             D.achievementClaimed[i] = true; D.coins += Achievements[i].Coins; Notify();
             return Achievements[i].Coins;
+        }
+
+        // ---------------- bundles ----------------
+        /// <summary>Gives the contents of a paid bundle. Returns a short text for the toast.</summary>
+        public static string GrantBundle(Bundle b, bool firstTimeOnly = false)
+        {
+            if (b == null) return "";
+            if (firstTimeOnly) { if (D.adFreeKitClaimed) return ""; D.adFreeKitClaimed = true; }
+            D.coins += b.Coins;
+            for (int i = 0; i < 5; i++) if (b.Powers[i] > 0) PowerUps.Add(D, PowerUps.All[i], b.Powers[i], true);
+            if (b.ExclusiveEffect >= 0) D.effectOwned[b.ExclusiveEffect] = true;
+            Notify();
+            return b.Name;
         }
 
         // ---------------- rewarded ads ----------------

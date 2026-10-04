@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace WordQuest
 {
-    public enum Tab { Home, Levels, Collection, Profile }
+    public enum Tab { Collection, Shop, Home, League, Profile }
 
     /// <summary>
     /// The whole app. Everything is built from code at start-up, so no scene setup is needed.
@@ -23,7 +23,6 @@ namespace WordQuest
         RectTransform canvasRt, safe, bgLayer, body, tabBar, popupLayer, toastLayer, fxLayer, gameLayer;
         Image bgImage;
         Tab tab = Tab.Home;
-        int lastTabIndex = 0;
         public RectTransform FxLayer => fxLayer;
         readonly List<Popup> popups = new List<Popup>();
         GameScreen game;
@@ -63,7 +62,7 @@ namespace WordQuest
             });
             Progress.Changed += OnProgressChanged;
             Iap.Init();
-            Iap.Delivered += () => { RefreshCoinPills(); Toast("Thank you! Purchase complete.", Palette.Green); Sfx.Play(Sfx.Kind.Coin); };
+            Iap.Delivered += id => { RefreshCoinPills(); Toast("Thank you! Purchase complete.", Palette.Green); if (tab == Tab.Home && game == null) ShowTab(Tab.Home); };
 #if WQ_ADMOB
             AdMobService.Init();
 #endif
@@ -73,8 +72,12 @@ namespace WordQuest
 
         void OnDestroy() { Progress.Changed -= OnProgressChanged; }
 
-        void OnApplicationPause(bool paused) { if (paused) SaveSystem.Save(); }
-        void OnApplicationQuit() { SaveSystem.Save(); }
+        void OnApplicationPause(bool paused)
+        {
+            if (paused) { SaveSystem.Data.lastPlayedDate = Clock.TodayKey; SaveSystem.Save(); NotificationService.Schedule(); }
+            else NotificationService.CancelAll();
+        }
+        void OnApplicationQuit() { SaveSystem.Save(); NotificationService.Schedule(); }
 
         // Refresh the visible screen when coins etc. change (not while playing)
         void OnProgressChanged() { RefreshCoinPills(); }
@@ -110,7 +113,7 @@ namespace WordQuest
 
             safe = UI.Stretch(UI.Node(canvasRt, "SafeArea"));
             ApplySafeArea();
-            body = UI.Stretch(UI.Node(safe, "Body"), 0, 190, 0, 0);
+            body = UI.Stretch(UI.Node(safe, "Body"), 0, 200, 0, 0);
             gameLayer = UI.Stretch(UI.Node(safe, "Game"));
             tabBar = UI.Node(safe, "TabBar");
             popupLayer = UI.Stretch(UI.Node(canvasRt, "Popups"));
@@ -137,12 +140,14 @@ namespace WordQuest
         }
 
         // =============== tabs ===============
-        static readonly string[] TabNames = { "Home", "Levels", "Collection", "Profile" };
-        static readonly string[] TabArt = { "tab_home", "tab_levels", "tab_collection", "tab_profile" };
-        RectTransform tabGlow; readonly List<RectTransform> tabIcons = new List<RectTransform>();
+        static readonly string[] TabNames = { "Cards", "Shop", "Home", "League", "Profile" };
+        static readonly string[] TabArt = { "tab_collection", "tab_shop", "tab_home", "tab_league", "tab_profile" };
+        const float TabBarH = 200f;
+        RectTransform tabTile;
+        readonly List<RectTransform> tabIcons = new List<RectTransform>();
         readonly List<Text> tabTexts = new List<Text>();
-        readonly List<Image> tabImgs = new List<Image>();
         Image tabBadge;
+        public bool LeagueDaily;
 
         public void ShowTab(Tab t)
         {
@@ -158,8 +163,9 @@ namespace WordQuest
             switch (t)
             {
                 case Tab.Home: BuildHome(body); break;
-                case Tab.Levels: BuildLevels(body); break;
                 case Tab.Collection: BuildCollection(body); break;
+                case Tab.Shop: BuildShopTab(body); break;
+                case Tab.League: BuildLeagueTab(body); break;
                 case Tab.Profile: BuildProfile(body); break;
             }
             SlideTabTo((int)t, !first && old != (int)t);
@@ -167,55 +173,73 @@ namespace WordQuest
 
         void RefreshCurrentTab() { if (game == null) ShowTab(tab); }
 
+        /// <summary>Blue bar with five tabs; the selected one is a raised, glossy ice tile with its name (like the reference).</summary>
         void BuildTabBar()
         {
-            UI.Place(tabBar, 0.5f, 0, 0, 100, 1040, 160);
-            var bar = UI.Sliced(tabBar, "navbar", 160, "Bar");
-            UI.Stretch(bar.rectTransform);
-            var glow = UI.Sliced(tabBar, "btn_orange", 132, "Glow");
-            tabGlow = glow.rectTransform;
-            tabGlow.anchorMin = tabGlow.anchorMax = new Vector2(0, 0.5f);
-            tabGlow.sizeDelta = new Vector2(236, 132);
-            float w = 1040f / 4f;
-            for (int i = 0; i < 4; i++)
+            tabBar.anchorMin = new Vector2(0, 0); tabBar.anchorMax = new Vector2(1, 0); tabBar.pivot = new Vector2(0.5f, 0);
+            tabBar.anchoredPosition = Vector2.zero; tabBar.sizeDelta = new Vector2(0, TabBarH);
+            var bar = UI.Solid(tabBar, new Color32(0x1E, 0x7A, 0xE8, 255), "Bar", true);
+            var br = bar.rectTransform; br.anchorMin = Vector2.zero; br.anchorMax = new Vector2(1, 0); br.offsetMin = Vector2.zero; br.offsetMax = new Vector2(0, TabBarH - 36);
+            var top = UI.Solid(tabBar, new Color32(0x9B, 0xDD, 0xFF, 255), "Top");
+            var tr = top.rectTransform; tr.anchorMin = new Vector2(0, 0); tr.anchorMax = new Vector2(1, 0); tr.pivot = new Vector2(0.5f, 0); tr.anchoredPosition = new Vector2(0, TabBarH - 36 - 7); tr.sizeDelta = new Vector2(0, 7);
+            float w = 1080f / 5f;
+            for (int i = 1; i < 5; i++)
+            {
+                var d1 = UI.Solid(tabBar, new Color32(0x14, 0x5A, 0xBE, 255), "Div" + i); var r1 = d1.rectTransform;
+                r1.anchorMin = r1.anchorMax = new Vector2(i / 5f, 0); r1.pivot = new Vector2(0.5f, 0); r1.anchoredPosition = Vector2.zero; r1.sizeDelta = new Vector2(4, TabBarH - 43);
+                var d2 = UI.Solid(tabBar, new Color32(0x5F, 0xB4, 0xFF, 255), "DivL" + i); var r2 = d2.rectTransform;
+                r2.anchorMin = r2.anchorMax = new Vector2(i / 5f, 0); r2.pivot = new Vector2(0, 0); r2.anchoredPosition = Vector2.zero; r2.sizeDelta = new Vector2(3, TabBarH - 43);
+            }
+            // the raised tile (moves under the selected tab)
+            var rim = UI.Round(tabBar, Color.white, 30, "Tile"); tabTile = rim.rectTransform;
+            tabTile.anchorMin = tabTile.anchorMax = new Vector2(0, 0); tabTile.pivot = new Vector2(0.5f, 0); tabTile.sizeDelta = new Vector2(w - 8, TabBarH);
+            var body2 = UI.Round(tabTile, new Color32(0x9F, 0xE6, 0xFF, 255), 26, "Body"); UI.Stretch(body2.rectTransform, 8, 8, 8, 8);
+            var shine = UI.Round(body2.transform, new Color(1, 1, 1, 0.45f), 20, "Shine");
+            shine.rectTransform.anchorMin = new Vector2(0.06f, 0.5f); shine.rectTransform.anchorMax = new Vector2(0.94f, 0.97f); shine.rectTransform.offsetMin = shine.rectTransform.offsetMax = Vector2.zero;
+            for (int i = 0; i < 5; i++)
             {
                 int idx = i;
                 var cell = UI.Node(tabBar, "Tab_" + TabNames[i]);
-                UI.Place(cell, 0, 0.5f, w * (i + 0.5f), 0, w, 160);
+                cell.anchorMin = cell.anchorMax = new Vector2(0, 0); cell.pivot = new Vector2(0.5f, 0);
+                cell.anchoredPosition = new Vector2(w * (i + 0.5f), 0); cell.sizeDelta = new Vector2(w, TabBarH);
                 var hit = cell.gameObject.AddComponent<Image>(); hit.color = new Color(0, 0, 0, 0);
                 UI.Click(hit, () => { if ((int)tab != idx) ShowTab((Tab)idx); });
                 cell.GetComponent<ButtonFx>().Down = 0.96f;
-                var icon = UI.Icon(cell, TabArt[i], 68, "Icon");
+                var icon = UI.Icon(cell, TabArt[i], 112, "Icon");
                 icon.raycastTarget = false;
-                UI.Place(icon.rectTransform, 0.5f, 0.5f, 0, 20, 68, 68);
-                var label = UI.Label(cell, TabNames[i].ToUpper(), 23, Palette.Ink, TextAnchor.MiddleCenter, true);
-                label.GetComponent<Outline>().effectColor = UI.PillOutline("btn_orange");
-                UI.Place(label.rectTransform, 0.5f, 0.5f, 0, -42, 236, 26);
-                tabIcons.Add(icon.rectTransform); tabTexts.Add(label); tabImgs.Add(icon);
+                icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                icon.rectTransform.anchoredPosition = new Vector2(0, -2); icon.rectTransform.sizeDelta = new Vector2(112, 112);
+                var label = UI.Label(cell, TabNames[i], 32, Color.white, TextAnchor.MiddleCenter, true);
+                label.GetComponent<Outline>().effectColor = new Color32(0x12, 0x4A, 0xA8, 255); label.GetComponent<Outline>().effectDistance = new Vector2(3, -3);
+                label.rectTransform.anchorMin = label.rectTransform.anchorMax = new Vector2(0.5f, 0); label.rectTransform.pivot = new Vector2(0.5f, 0);
+                label.rectTransform.anchoredPosition = new Vector2(0, 14); label.rectTransform.sizeDelta = new Vector2(w, 40);
+                tabIcons.Add(icon.rectTransform); tabTexts.Add(label);
             }
-            tabGlow.SetSiblingIndex(1);
-            tabBadge = UI.Icon(tabBar, "spark_glow", 30, "Badge"); tabBadge.gameObject.SetActive(false);
+            tabTile.SetSiblingIndex(top.transform.GetSiblingIndex() + 1 + 8);
+            tabBadge = UI.Icon(tabBar, "spark_glow", 34, "Badge"); tabBadge.gameObject.SetActive(false);
         }
 
         void SlideTabTo(int idx, bool animate)
         {
-            float w = 1040f / 4f, target = w * (idx + 0.5f);
-            tabGlow.DOKill();
-            if (animate) tabGlow.DOAnchorPosX(target, 0.3f).SetEase(Ease.OutBack).SetUpdate(true).SetLink(tabGlow.gameObject);
-            else tabGlow.anchoredPosition = new Vector2(target, 0);
+            float w = 1080f / 5f, target = w * (idx + 0.5f);
+            tabTile.DOKill();
+            if (animate) tabTile.DOAnchorPosX(target, 0.28f).SetEase(Ease.OutCubic).SetUpdate(true).SetLink(tabTile.gameObject);
+            else tabTile.anchoredPosition = new Vector2(target, 0);
             for (int i = 0; i < tabIcons.Count; i++)
             {
                 bool on = i == idx;
-                tabImgs[i].color = on ? Color.white : new Color(1, 1, 1, 0.9f);
-                tabTexts[i].color = on ? Color.white : Palette.Ink;
-                tabTexts[i].GetComponent<Outline>().enabled = on;
+                tabIcons[i].DOKill();
+                tabIcons[i].anchoredPosition = new Vector2(0, on ? 22 : -2);
+                tabIcons[i].localScale = Vector3.one * (on ? 1.18f : 1f);
+                tabTexts[i].gameObject.SetActive(on);
             }
             // red dot on Collection or Profile when a reward is waiting
-            bool dot = false; int dotTab = 2;
+            bool dot = false; int dotTab = 0;
             for (int c = 0; c < WordBank.Count; c++) if (Progress.ClaimableStep(c) >= 0) dot = true;
-            if (!dot) { dotTab = 3; dot = Progress.ReadyAchievements() > 0; }
-            tabBadge.gameObject.SetActive(dot);
-            if (dot) { UI.Place(tabBadge.rectTransform, 0, 0.5f, w * (dotTab + 0.5f) + 40, 48, 30, 30); tabBadge.color = Palette.Red; }
+            if (!dot) { dotTab = 4; dot = Progress.ReadyAchievements() > 0; }
+            if (!dot && Progress.CanClaimDailyReward()) { dot = true; dotTab = 2; }
+            tabBadge.gameObject.SetActive(dot && dotTab != idx);
+            if (dot) { UI.Place(tabBadge.rectTransform, 0, 0, w * (dotTab + 0.5f) + 44, TabBarH - 78, 34, 34); tabBadge.color = Palette.Red; tabBadge.transform.SetAsLastSibling(); }
         }
 
         // =============== shared HUD ===============
@@ -265,23 +289,24 @@ namespace WordQuest
 
         public RectTransform CoinPill(Transform parent, bool plus = true)
         {
-            var pill = UI.Sliced(parent, "chip", 84, "CoinPill", true);
-            var rt = pill.rectTransform; rt.sizeDelta = new Vector2(300, 84);
-            var coin = UI.Icon(rt, "coin", 62, "Coin");
-            UI.Place(coin.rectTransform, 0, 0.5f, 52, 0, 60, 60);
-            var t = UI.Label(rt, SaveSystem.Data.coins.ToString("N0"), 40, new Color32(0xB5, 0x55, 0x0A, 255), TextAnchor.MiddleCenter);
-            UI.Stretch(t.rectTransform, 84, 0, plus ? 100 : 28, 0);
-            t.resizeTextForBestFit = true; t.resizeTextMinSize = 22; t.resizeTextMaxSize = 40;
+            var root = UI.Node(parent, "CoinPill");
+            root.sizeDelta = new Vector2(320, 92);
+            var pill = UI.Sliced(root, "chip", 76, "Body", true);
+            var pr = pill.rectTransform; pr.anchorMin = new Vector2(0, 0.5f); pr.anchorMax = new Vector2(1, 0.5f); pr.offsetMin = new Vector2(46, -38); pr.offsetMax = new Vector2(0, 38);
+            var t = UI.Label(pill.transform, SaveSystem.Data.coins.ToString("N0"), 44, new Color32(0x6B, 0x2C, 0x0A, 255), TextAnchor.MiddleCenter);
+            UI.Stretch(t.rectTransform, 62, 0, 24, 0);
+            t.resizeTextForBestFit = true; t.resizeTextMinSize = 22; t.resizeTextMaxSize = 44;
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
-            coinDisplays.Add(new CoinDisplay { T = t, Shown = SaveSystem.Data.coins, Pill = rt });
+            var coin = UI.Icon(root, "coin", 96, "Coin");
+            UI.Place(coin.rectTransform, 0, 0.5f, 48, 0, 96, 96);
+            coinDisplays.Add(new CoinDisplay { T = t, Shown = SaveSystem.Data.coins, Pill = root });
             if (plus)
             {
-                var p = UI.GlyphButton(rt, "g_plus", Palette.Green, 62, "Plus");
-                UI.Place(p.rectTransform, 1, 0.5f, -46, 0, 62, 62);
-                UI.Click(p, () => ShowShop());
+                var p = UI.GlyphButton(root, "g_plus", Palette.Green, 40, "Plus");
+                UI.Place(p.rectTransform, 0, 0.5f, 78, -30, 40, 40);
             }
-            UI.Click(pill, () => ShowShop());
-            return rt;
+            UI.Click(pill, () => { if (game != null) ShowShop(); else ShowTab(Tab.Shop); });
+            return root;
         }
 
         public Vector2 CoinTarget()
@@ -293,31 +318,32 @@ namespace WordQuest
             return new Vector2(canvasRt.rect.width / 2 - 260, canvasRt.rect.height / 2 - 130);
         }
 
-        public RectTransform TopBar(Transform parent, bool gear = true)
+        public RectTransform TopBar(Transform parent, bool gear = true, bool avatar = true)
         {
             var d = SaveSystem.Data;
             var bar = UI.Node(parent, "TopBar");
             bar.anchorMin = new Vector2(0, 1); bar.anchorMax = new Vector2(1, 1); bar.pivot = new Vector2(0.5f, 1);
             bar.anchoredPosition = new Vector2(0, -12); bar.sizeDelta = new Vector2(0, 130);
 
-            // avatar + level
-            var av = Avatar(bar, d.avatar, d.ring, 110);
-            UI.Place(av, 0, 0.5f, 76, 0, 110, 110);
-            UI.Click(av.GetComponent<Image>(), () => ShowTab(Tab.Profile));
-            var lvl = UI.Label(bar, "LV " + d.playerLevel, 34, Color.white, TextAnchor.MiddleLeft, true);
-            UI.PlaceL(lvl.rectTransform, 0, 0.5f, 150, 26, 200, 44);
-            var xp = UI.ProgressBar(bar, 240, 34, Palette.Blue, "Xp");
-            UI.Place(xp.Root, 0, 0.5f, 270, -22, 240, 34);
-            xp.Set(Progress.XpFraction);
-            var xpl = UI.Label(xp.Root, $"{d.xp}/{Economy.XpForLevel(d.playerLevel)}", 22, Palette.Ink, TextAnchor.MiddleCenter);
-            UI.Stretch(xpl.rectTransform);
-
             var cp = CoinPill(bar);
-            UI.Place(cp, 1, 0.5f, gear ? -290 : -180, 0, 300, 82);
+            UI.Place(cp, 0, 0.5f, 20 + 160, 0, 320, 92);
+            if (avatar)
+            {
+                // level + xp pill in the middle
+                var lp = UI.Sliced(bar, "chip", 76, "LevelPill", true);
+                UI.Place(lp.rectTransform, 0, 0.5f, 350 + 175, 0, 350, 76);
+                var av = Avatar(lp.transform, d.avatar, d.ring, 62); UI.Place(av, 0, 0.5f, 48, 0, 62, 62);
+                UI.Click(lp, () => ShowTab(Tab.Profile));
+                var lvl = UI.Label(lp.transform, "LV " + d.playerLevel, 32, new Color32(0x22, 0x36, 0x78, 255), TextAnchor.MiddleLeft);
+                UI.PlaceL(lvl.rectTransform, 0, 0.5f, 98, 12, 220, 38);
+                var xp = UI.ProgressBar(lp.transform, 220, 22, new Color32(0x33, 0xA3, 0xFF, 255), "Xp");
+                UI.Place(xp.Root, 0, 0.5f, 98 + 105, -14, 210, 20); xp.Root.sizeDelta = new Vector2(210, 20);
+                xp.Set(Progress.XpFraction);
+            }
             if (gear)
             {
-                var g = UI.GlyphButton(bar, "g_gear", Palette.Blue, 90, "Gear");
-                UI.Place(g.rectTransform, 1, 0.5f, -70, 0, 90, 90);
+                var g = UI.GlyphButton(bar, "g_gear", new Color32(0xE0, 0x62, 0x4A, 255), 96, "Gear", 0.6f);
+                UI.Place(g.rectTransform, 1, 0.5f, -70, 0, 96, 96);
                 UI.Click(g, ShowSettings);
             }
             return bar;

@@ -8,21 +8,26 @@ using UnityEngine.Purchasing;
 namespace WordQuest
 {
     /// <summary>
-    /// Real-money purchases (Google Play): Remove Ads and three coin bags.
-    /// Product ids must match the ones in Play Console. In the Editor a fake store grants purchases instantly for testing.
+    /// Real-money purchases (Google Play).
+    ///   remove_ads        non-consumable   removes full-screen ads
+    ///   remove_ads_plus   non-consumable   removes ads + a small kit (given once)
+    ///   bundle_starter / bundle_player / bundle_power / bundle_mega   consumable bundles with FIXED contents (see Bundles in Economy.cs)
+    /// Product ids must match Play Console. In the Editor a fake store grants purchases instantly for testing.
     /// </summary>
     public static class Iap
     {
         public const string RemoveAds = "remove_ads";
-        public static readonly string[] CoinPacks = { "coins_small", "coins_medium", "coins_large" };
-        static readonly int[] PackCoins = { 500, 1500, 4000 };
-        static readonly string[] FakePrices = { "$0.99", "$2.99", "$6.99" };
+        public static string[] BundleIds => Array.ConvertAll(Bundles.All, b => b.Id);
 
         public static string Status = "off";
         public static event Action PricesChanged;
-        public static event Action Delivered;
+        public static event Action<string> Delivered;      // product id
 
-        public static int CoinsIn(string id) { int i = Array.IndexOf(CoinPacks, id); return i >= 0 ? PackCoins[i] : 0; }
+        static readonly Dictionary<string, string> FakePrices = new Dictionary<string, string>
+        {
+            { "bundle_starter", "Rs 99" }, { "bundle_player", "Rs 299" }, { "bundle_power", "Rs 599" }, { "bundle_mega", "Rs 999" },
+            { "remove_ads", "Rs 199" }, { "remove_ads_plus", "Rs 399" },
+        };
 
 #if WQ_IAP
         static StoreController store;
@@ -47,8 +52,12 @@ namespace WordQuest
                 Status = "connecting";
                 await store.Connect();
                 Status = "loading products";
-                var defs = new List<ProductDefinition> { new ProductDefinition(RemoveAds, ProductType.NonConsumable) };
-                foreach (var id in CoinPacks) defs.Add(new ProductDefinition(id, ProductType.Consumable));
+                var defs = new List<ProductDefinition>
+                {
+                    new ProductDefinition(RemoveAds, ProductType.NonConsumable),
+                    new ProductDefinition(Bundles.AdFreePlus, ProductType.NonConsumable),
+                };
+                foreach (var id in BundleIds) defs.Add(new ProductDefinition(id, ProductType.Consumable));
                 store.FetchProducts(defs);
             }
             catch (Exception e) { Status = "store error: " + e.Message; store = null; }
@@ -86,20 +95,14 @@ namespace WordQuest
 
         static void Grant(ICart cart, bool fresh)
         {
-            var d = SaveSystem.Data;
-            foreach (var item in cart.Items())
-            {
-                string id = item.Product.definition.id;
-                if (id == RemoveAds) { if (!d.adsRemoved) { d.adsRemoved = true; Progress.Notify(); Delivered?.Invoke(); } }
-                else if (fresh && Array.IndexOf(CoinPacks, id) >= 0) { GameApp.I.RewardCoins(CoinsIn(id)); Delivered?.Invoke(); }
-            }
+            foreach (var item in cart.Items()) Deliver(item.Product.definition.id, fresh);
         }
 
         public static string PriceOf(string id) => products.TryGetValue(id, out var p) ? p.metadata.localizedPriceString : "...";
 
         public static void Buy(string id, Action<string> problem)
         {
-            if (Application.isEditor) { FakeBuy(id); return; }
+            if (Application.isEditor) { Deliver(id, true); return; }
             if (!products.TryGetValue(id, out var p)) { problem?.Invoke("Store not ready. Check your internet and try again."); Reconnect(); return; }
             pendingProblem = problem;
             store.PurchaseProduct(p);
@@ -110,33 +113,37 @@ namespace WordQuest
             if (store == null) { message?.Invoke("Store not ready"); return; }
             store.RestoreTransactions((ok, err) => message?.Invoke(ok ? "Purchases restored" : "Could not restore: " + err));
         }
+
+        public static string Price(string id) => Application.isEditor ? FakePrices[id] : PriceOf(id);
 #else
         public static void Init() { Status = "purchasing not installed"; }
         public static void Reconnect() { }
-        public static string PriceOf(string id) { int i = Array.IndexOf(CoinPacks, id); return i >= 0 ? FakePrices[i] : "$2.99"; }
-        public static void Buy(string id, Action<string> problem) { if (Application.isEditor) FakeBuy(id); else problem?.Invoke("Store not ready"); }
+        public static void Buy(string id, Action<string> problem) { if (Application.isEditor) Deliver(id, true); else problem?.Invoke("Store not ready"); }
         public static void Restore(Action<string> message) { message?.Invoke("Store not ready"); }
+        public static string Price(string id) => FakePrices.TryGetValue(id, out var p) ? p : "";
 #endif
 
-#if WQ_IAP
-        static string FakePrice(string id) { int i = Array.IndexOf(CoinPacks, id); return i >= 0 ? FakePrices[i] : "$2.99"; }
-#endif
-
-        static void FakeBuy(string id)
+        /// <summary>Gives what a product contains. `fresh` = a new purchase (consumables are only given for new purchases).</summary>
+        static void Deliver(string id, bool fresh)
         {
-            if (id == RemoveAds) { SaveSystem.Data.adsRemoved = true; Progress.Notify(); }
-            else GameApp.I.RewardCoins(CoinsIn(id));
-            Delivered?.Invoke();
-        }
-
-        /// <summary>Price label used by the shop. The Editor shows fake prices.</summary>
-        public static string Price(string id)
-        {
-#if WQ_IAP
-            return Application.isEditor ? FakePrice(id) : PriceOf(id);
-#else
-            return PriceOf(id);
-#endif
+            var d = SaveSystem.Data;
+            if (id == RemoveAds)
+            {
+                if (!d.adsRemoved) { d.adsRemoved = true; Progress.Notify(); Delivered?.Invoke(id); }
+            }
+            else if (id == Bundles.AdFreePlus)
+            {
+                bool first = !d.adsRemoved || !d.adFreeKitClaimed;
+                d.adsRemoved = true;
+                if (!d.adFreeKitClaimed) { GameApp.I.BundleDelivered(Bundles.AdFreeKit, true); }
+                else Progress.Notify();
+                if (first) Delivered?.Invoke(id);
+            }
+            else if (fresh)
+            {
+                var b = Bundles.Find(id);
+                if (b != null) { GameApp.I.BundleDelivered(b, false); Delivered?.Invoke(id); }
+            }
         }
     }
 }

@@ -62,8 +62,10 @@ namespace WordQuest.EditorTools
             app.ShowTab(Tab.Home);
             void Pop(string name, Action open) { open(); sb.AppendLine(Lint(name)); app.CloseAllPopups(); Advance(14); }
             Pop("shop", () => app.ShowShop());
-            Pop("league week", () => app.ShowLeague(false));
-            Pop("league today", () => app.ShowLeague(true));
+            app.ShowLeague(true); sb.AppendLine(Lint("league today tab")); app.ShowLeague(false); sb.AppendLine(Lint("league week tab")); app.ShowTab(Tab.Home);
+            Pop("daily quest", () => app.ShowDailyQuest());
+            Pop("missions", () => app.ShowMissions());
+            Pop("ad-free", () => app.ShowAdFree());
             Pop("settings", () => app.ShowSettings());
             Pop("how to", () => app.ShowHowTo());
             Pop("daily reward", () => app.ShowDailyReward());

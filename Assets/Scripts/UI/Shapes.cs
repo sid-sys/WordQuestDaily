@@ -42,6 +42,19 @@ namespace WordQuest
             return Make("rr" + radius, size, size, (x, y) => new Color32(255, 255, 255, (byte)(Cov(RoundDist(x + 0.5f, y + 0.5f, size, size, radius)) * 255)), new Vector4(radius + 2, radius + 2, radius + 2, radius + 2));
         }
 
+        /// <summary>Soft round glow: white in the middle, fading to nothing at the edge.</summary>
+        public static Sprite Glow()
+        {
+            const int n = 128;
+            return Make("glow", n, n, (x, y) =>
+            {
+                float dx = (x + 0.5f - n / 2f) / (n / 2f), dy = (y + 0.5f - n / 2f) / (n / 2f);
+                float r = Mathf.Sqrt(dx * dx + dy * dy);
+                float a = Mathf.Clamp01(1f - r); a = a * a * (3 - 2 * a);
+                return new Color32(255, 255, 255, (byte)(a * 255));
+            }, Vector4.zero);
+        }
+
         public static Sprite Circle()
         {
             const int s = 128;
@@ -147,12 +160,20 @@ namespace WordQuest
 
         static readonly Dictionary<string, CardLook> Looks = new Dictionary<string, CardLook>
         {
-            { "card_a", L("#E9B84A", "#FFFFFF", "#FFFFFF", "#F0F6FF", 3, 6, 40) },
-            { "card_b", L("#E9B84A", "#FFFFFF", "#FFFFFF", "#F0F6FF", 3, 6, 40) },
+            { "card_a", L("#D6A23E", "#FFFFFF", "#FFFBEF", "#F8E8C2", 3, 6, 40) },
+            { "card_b", L("#D6A23E", "#FFFFFF", "#FFFBEF", "#F8E8C2", 3, 6, 40) },
             { "card_gold", L("#E0A21C", "#FFF1B8", "#FFF7D6", "#FFE9A0", 3, 6, 40) },
-            { "card_green", L("#4FB868", "#E9FBEA", "#F1FFF1", "#CFF2D3", 3, 6, 40) },
-            { "card_red", L("#E8737F", "#FFEFF1", "#FFF3F4", "#FFD6DB", 3, 6, 40) },
-            { "card_blue", L("#5FA8E8", "#EAF6FF", "#F2F9FF", "#D3EAFF", 3, 6, 40) },
+            { "card_green", L("#3FA85A", "#E9FBEA", "#F1FFF1", "#CFF2D3", 3, 6, 40) },
+            { "card_red", L("#D8576A", "#FFEFF1", "#FFF3F4", "#FFD6DB", 3, 6, 40) },
+            { "card_blue", L("#4A93DA", "#EAF6FF", "#F2F9FF", "#D3EAFF", 3, 6, 40) },
+            { "card_inset", L("#D2B98A", "#EBDDBE", "#F1E5C9", "#E7D6AF", 2, 3, 28) },
+            { "bund_orange", L("#E58A1B", "#FFC25A", "#FFF8E8", "#FBE7C0", 4, 9, 44) },
+            { "bund_red", L("#E33A55", "#FF8DA0", "#FFF8E8", "#FBE7C0", 4, 9, 44) },
+            { "bund_purple", L("#7A3FD8", "#B58CF5", "#FFF8E8", "#FBE7C0", 4, 9, 44) },
+            { "bund_blue", L("#2F8DEB", "#8CCBFF", "#FFF8E8", "#FBE7C0", 4, 9, 44) },
+            { "lvl_done", L("#2E9E3F", "#8EE59A", "#8FA0A8", "#73828C", 4, 9, 36) },
+            { "lvl_cur", L("#33C21F", "#A9F58E", "#8FA0A8", "#73828C", 4, 9, 36) },
+            { "lvl_lock", L("#5C7592", "#9DB3CC", "#7E8E9E", "#66788A", 4, 9, 36) },
             { "popup", L("#6BB6DE", "#FFFFFF", "#E3F6FF", "#C5E9FA", 4, 12, 56) },
             { "popup_cream", L("#E0A23A", "#FFFFFF", "#FFFDF0", "#FFF0C2", 4, 12, 56) },
             { "popup_pink", L("#E88BC2", "#FFFFFF", "#FFF2FA", "#FFD9EE", 4, 12, 56) },

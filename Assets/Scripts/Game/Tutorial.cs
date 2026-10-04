@@ -25,7 +25,7 @@ namespace WordQuest
             "Tap Shuffle to move the words you have not found!",
             "Stuck? Tap the magnifier for a hint!",
             "Tap Reveal Letter to see one letter of a word!",
-            "Tap Word Finder to see where a word is!",
+            "Tap Word Finder to see where a word starts!",
             "Tap Reveal Word to find a whole word for you!",
         };
 

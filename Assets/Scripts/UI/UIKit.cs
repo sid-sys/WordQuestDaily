@@ -170,13 +170,13 @@ namespace WordQuest
         }
         static readonly Dictionary<string, PillDef> PillDefs = new Dictionary<string, PillDef>
         {
-            { "btn_green", PD("#FFF3C9", "#4CC93A", true) }, { "btn_yellow", PD("#FFF3C9", "#FFC32A", true) },
-            { "btn_blue", PD("#FFF3C9", "#2E9BF5", true) }, { "btn_red", PD("#FFF3C9", "#F25555", true) },
-            { "btn_purple", PD("#FFF3C9", "#9358F0", true) }, { "btn_orange", PD("#FFF3C9", "#FF8A2B", true) },
-            { "btn_pink", PD("#FFF3C9", "#FF5FA8", true) }, { "btn_grey", PD("#F1F3F8", "#B7C0D4", true) },
-            { "btn_white", PD("#DDE8F8", "#FFFFFF", false) }, { "btn_navy", PD("#FFF3C9", "#26346B", true) },
-            { "chip", PD("#FFFFFF", "#FFFAE6", false) }, { "navbar", PD("#FFFFFF", "#FFFBEA", false) },
-            { "track", PD("#FFFFFF", "#E1EEFD", false) }, { "fill", PD("#00000000", "#4CC93A", true) },
+            { "btn_green", PD("#2C9A1F", "#59D33F", true) }, { "btn_yellow", PD("#D98F0B", "#FFC82E", true) },
+            { "btn_blue", PD("#1659B8", "#33A3FF", true) }, { "btn_red", PD("#B01E2E", "#F5546A", true) },
+            { "btn_purple", PD("#5E2AB0", "#9A5CF2", true) }, { "btn_orange", PD("#C25A0A", "#FF8F2E", true) },
+            { "btn_pink", PD("#B01F6A", "#FF63A8", true) }, { "btn_grey", PD("#7A8499", "#BBC3D6", true) },
+            { "btn_white", PD("#C9D6EA", "#FFFFFF", false) }, { "btn_navy", PD("#0E1E5E", "#2A44A8", true) },
+            { "chip", PD("#C7B189", "#FBF1DA", false) }, { "navbar", PD("#0F4FB5", "#2478E6", false) },
+            { "track", PD("#9DB6D8", "#E4EEFB", false) }, { "fill", PD("#00000000", "#4CC93A", true) },
         };
 
         public static bool IsPillKey(string key) => key != null && PillDefs.ContainsKey(key);
@@ -248,10 +248,10 @@ namespace WordQuest
         }
 
         /// <summary>Rounded-square icon button: cream rim, colored glossy body, white symbol (glyph) in the middle.</summary>
-        public static Image GlyphButton(Transform parent, string glyphKey, Color body, float size, string name = "GlyphButton")
+        public static Image GlyphButton(Transform parent, string glyphKey, Color body, float size, string name = "GlyphButton", float glyphScale = 0.58f, Color? rimColor = null)
         {
             var rim = Node(parent, name).gameObject.AddComponent<Image>();
-            rim.sprite = Shapes.TileFlat(); rim.type = Image.Type.Sliced; rim.color = new Color32(0xFF, 0xF3, 0xC9, 255);
+            rim.sprite = Shapes.TileFlat(); rim.type = Image.Type.Sliced; rim.color = rimColor ?? new Color32(0xFF, 0xFF, 0xFF, 255);
             var rr = rim.rectTransform; rr.sizeDelta = new Vector2(size, size);
             float inset = Mathf.Clamp(size * 0.075f, 3f, 8f);
             var b = Node(rim.transform, "Body"); var bi = b.gameObject.AddComponent<Image>();
@@ -266,7 +266,7 @@ namespace WordQuest
             var glyph = Img(rim.transform, glyphKey, "Glyph");
             glyph.rectTransform.anchorMin = glyph.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             glyph.rectTransform.anchoredPosition = new Vector2(0, size * 0.015f);
-            glyph.rectTransform.sizeDelta = new Vector2(size * 0.58f, size * 0.58f);
+            glyph.rectTransform.sizeDelta = new Vector2(size * glyphScale, size * glyphScale);
             glyph.raycastTarget = false;
             return rim;
         }

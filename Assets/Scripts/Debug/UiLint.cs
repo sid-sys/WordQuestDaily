@@ -94,7 +94,7 @@ namespace WordQuest
                     var r = WorldRect(g.rectTransform);
                     if (r.width > 900 || r.height > 900) continue;
                     if (g.name.StartsWith("P") && g.name.Length == 1) continue;   // particles
-                    if (g.name == "Glyph" || g.name == "C") continue;
+                    if (g.name == "Glyph" || g.name == "C" || g.name == "Dot" || g.name == "In" || g.name == "Glow" || g.name == "Coin" && g.transform.parent != null && g.transform.parent.name == "CoinPill") continue;
                     if (!Clip(g, ref r)) continue;
                     items.Add(new Item { g = g, name = Path(g.transform), r = r });
                 }
