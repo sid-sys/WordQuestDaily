@@ -65,6 +65,20 @@ SHEETS = {
    "middle for a logo. No text, no letters, no numbers."),
 }
 
+SMALL = ("IMPORTANT: draw every item SMALL, fully inside its own cell with a wide empty margin on all four sides (each item uses only about half of the "
+         "cell width and height), so no item is ever cut off or touches an edge. ")
+G32 = ("Grid of 3 columns and 2 rows on a fully transparent background, wide empty gaps, no cast shadows, no outer glow, no labels.")
+SHEETS.update({
+ "misc_a_v3": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 icons, reading order: 1 calendar page with a red top, 2 golden bell, 3 light-blue snowflake crystal, "
+   f"4 speaker with sound waves, 5 speaker with a red x, 6 open book with a blue cover. {G32}"),
+ "misc_b_v3": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 icons, reading order: 1 rolled scroll with a red ribbon, 2 blue shield with a white lightning bolt, "
+   f"3 orange flame, 4 purple gift box with a gold question mark, 5 blue shield with a gold star, 6 cute pink piggy bank with a coin slot. {G32}"),
+ "ui_b_v3": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 icons, reading order: 1 gold trophy cup, 2 gold crown, 3 pile of gold star coins, "
+   f"4 big heap of gold star coins with a few loose coins, 5 round purple orb with a white question mark, 6 gold five-point star. {G32}"),
+ "glyphs_c_v3": ("1536x1024", True, [REF_SHOP], "A sprite sheet of 6 chunky UI symbols in pure white with a soft light-grey underside, rounded ends, thick strokes, no outline, no background. "
+   f"{SMALL}Reading order: 1 gear, 2 house, 3 left arrow, 4 X close mark, 5 plus sign, 6 check mark. No text. {G32}"),
+})
+
 
 def main(names):
     force = "--force" in names
