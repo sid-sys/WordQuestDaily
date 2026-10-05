@@ -19,7 +19,8 @@ namespace WordQuest
         public const string RemoveAds = "remove_ads";
         public static string[] BundleIds => Array.ConvertAll(Bundles.All, b => b.Id);
 
-        public static string Status = "off";
+        static string status = "off";
+        public static string Status { get => status; set { status = value; Debug.Log("[IAP] " + value); } }
         public static event Action PricesChanged;
         public static event Action<string> Delivered;      // product id
 
@@ -33,7 +34,7 @@ namespace WordQuest
         static StoreController store;
         static readonly Dictionary<string, Product> products = new Dictionary<string, Product>();
         static Action<string> pendingProblem;
-        static bool connecting;
+        static bool connecting, subscribed;
 
         public static async void Init()
         {
@@ -43,12 +44,16 @@ namespace WordQuest
             try
             {
                 store = UnityIAPServices.StoreController();
-                store.OnPurchasePending += OnPending;
-                store.OnPurchaseFailed += OnFailed;
-                store.OnProductsFetched += OnFetched;
-                store.OnProductsFetchFailed += f => Status = "products failed: " + f.FailureReason;
-                store.OnPurchasesFetched += OnPurchasesFetched;
-                store.OnStoreDisconnected += d => { Status = "store disconnected"; };
+                if (!subscribed)   // only once: a retry must never add the handlers again (that would deliver a purchase twice)
+                {
+                    subscribed = true;
+                    store.OnPurchasePending += OnPending;
+                    store.OnPurchaseFailed += OnFailed;
+                    store.OnProductsFetched += OnFetched;
+                    store.OnProductsFetchFailed += f => { Status = "products failed: " + f.FailureReason; };
+                    store.OnPurchasesFetched += OnPurchasesFetched;
+                    store.OnStoreDisconnected += d => { Status = "store disconnected"; store = null; };
+                }
                 Status = "connecting";
                 await store.Connect();
                 Status = "loading products";
@@ -65,7 +70,18 @@ namespace WordQuest
         }
 
         /// <summary>Try again if the first attempt failed (call when the shop opens).</summary>
-        public static void Reconnect() { if (store == null && !connecting) Init(); }
+        public static void Reconnect()
+        {
+            if (store == null && !connecting) { Init(); return; }
+            if (store != null && !connecting && products.Count == 0) RefetchProducts();
+        }
+
+        static void RefetchProducts()
+        {
+            var defs = new List<ProductDefinition> { new ProductDefinition(RemoveAds, ProductType.NonConsumable), new ProductDefinition(Bundles.AdFreePlus, ProductType.NonConsumable) };
+            foreach (var id in BundleIds) defs.Add(new ProductDefinition(id, ProductType.Consumable));
+            try { store.FetchProducts(defs); } catch (Exception e) { Status = "fetch error: " + e.Message; }
+        }
 
         static void OnFetched(List<Product> list)
         {

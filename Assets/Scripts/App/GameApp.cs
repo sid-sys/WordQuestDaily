@@ -62,6 +62,7 @@ namespace WordQuest
             });
             Progress.Changed += OnProgressChanged;
             Iap.Init();
+            Iap.PricesChanged += () => { if (game == null && !HasPopup && tab == Tab.Shop) ShowTab(Tab.Shop); };
             Iap.Delivered += id => { RefreshCoinPills(); Toast("Thank you! Purchase complete.", Palette.Green); if (tab == Tab.Home && game == null) ShowTab(Tab.Home); };
 #if WQ_ADMOB
             AdMobService.Init();
