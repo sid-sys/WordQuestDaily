@@ -29,3 +29,6 @@ KEYSTORE-INFO.txt
 *.jks
 *.p12
 *.pem
+
+# Android build temp files
+.utmp/
