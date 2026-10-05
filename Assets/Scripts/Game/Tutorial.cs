@@ -100,7 +100,7 @@ namespace WordQuest
             var glow = UI.Img(layer, "spark_glow", "TutGlow"); glow.color = new Color(1f, 0.9f, 0.3f, 0.55f);
             var gr = glow.rectTransform; gr.anchorMin = gr.anchorMax = new Vector2(0.5f, 0.5f); gr.anchoredPosition = target; gr.sizeDelta = new Vector2(150, 150);
             gr.DOScale(1.25f, 0.6f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetUpdate(true).SetLink(gr.gameObject);
-            var ring = UI.Img(layer, "spark_ring", "TutRing"); ring.color = new Color(1, 1, 1, 0);
+            var ring = UI.Node(layer, "TutRing").gameObject.AddComponent<Image>(); ring.sprite = Shapes.Ring(); ring.raycastTarget = false; ring.color = new Color(1, 1, 1, 0);
             var rr = ring.rectTransform; rr.anchorMin = rr.anchorMax = new Vector2(0.5f, 0.5f); rr.anchoredPosition = target; rr.sizeDelta = new Vector2(120, 120);
             t.Extras = glow.gameObject; ring.transform.SetParent(glow.transform, false); rr.anchoredPosition = Vector2.zero; rr.sizeDelta = new Vector2(120, 120);
 

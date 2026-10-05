@@ -108,6 +108,8 @@ namespace WordQuest
             if (d.missions == null) d.missions = new MissionState();
             if (d.collection == null) d.collection = new List<CatWords>();
             d.avatarOwned[0] = true; d.themeOwned[0] = true; d.effectOwned[0] = true;
+            for (int i = 0; i < Economy.AvatarLevel.Length && i < 12; i++) if (i != 9 && d.playerLevel >= Economy.AvatarLevel[i]) d.avatarOwned[i] = true;
+            for (int i = 0; i < Economy.EffectLevel.Length && i < 5; i++) if (d.playerLevel >= Economy.EffectLevel[i]) d.effectOwned[i] = true;
             if (d.playerLevel < 1) d.playerLevel = 1;
         }
 

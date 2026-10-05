@@ -82,7 +82,7 @@ namespace WordQuest
                 var cell = UI.Node(grid, "Av" + i); UI.Place(cell, 0.5f, 1, x, yy, 220, 220);
                 var pic = UI.Img(cell, "av_" + i, "Pic", true); UI.Stretch(pic.rectTransform, 10, 10, 10, 10);
                 if (!own) pic.color = new Color(0.35f, 0.35f, 0.4f, 0.9f);
-                if (d.avatar == i) { var sel = UI.Img(cell, "spark_ring", "Sel"); sel.color = Palette.Yellow; UI.Stretch(sel.rectTransform, -12, -12, -12, -12); }
+                if (d.avatar == i) { var sel = UI.Node(cell, "Sel").gameObject.AddComponent<Image>(); sel.sprite = Shapes.Ring(); sel.color = new Color32(0xFF, 0xC8, 0x2E, 255); sel.raycastTarget = false; UI.Stretch(sel.rectTransform, 0, 0, 0, 0); }
                 if (!own)
                 {
                     var lk = UI.Icon(cell, "lock", 70, "Lock"); UI.Place(lk.rectTransform, 0.5f, 0.5f, 0, 14, 70, 70);

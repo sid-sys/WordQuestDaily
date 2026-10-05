@@ -55,6 +55,18 @@ namespace WordQuest
             }, Vector4.zero);
         }
 
+        /// <summary>Thin round outline (transparent middle), tint it. Used to mark the selected avatar.</summary>
+        public static Sprite Ring()
+        {
+            const int n = 128;
+            return Make("ring", n, n, (x, y) =>
+            {
+                float d = RoundDist(x + 0.5f, y + 0.5f, n, n, n / 2f);
+                float outer = Cov(d), inside = Cov(d + 12f);   // inside = the smaller circle that is cut out
+                return new Color32(255, 255, 255, (byte)(Mathf.Clamp01(outer * (1f - inside)) * 255));
+            }, Vector4.zero);
+        }
+
         public static Sprite Circle()
         {
             const int s = 128;

@@ -300,7 +300,7 @@ namespace WordQuest
 
         public void MarkCell(int x, int y, Color color, string tag)
         {
-            var ring = UI.Img(markLayer, "spark_ring", tag + "_" + x + "_" + y);
+            var ring = UI.Node(markLayer, tag + "_" + x + "_" + y).gameObject.AddComponent<Image>(); ring.sprite = Shapes.Ring(); ring.raycastTarget = false;
             ring.color = color;
             var r = ring.rectTransform; r.anchorMin = r.anchorMax = new Vector2(0, 1);
             r.anchoredPosition = CellCenter(x, y); r.sizeDelta = new Vector2(Cell * 1.05f, Cell * 1.05f);
