@@ -79,6 +79,20 @@ SHEETS.update({
    f"{SMALL}Reading order: 1 gear, 2 house, 3 left arrow, 4 X close mark, 5 plus sign, 6 check mark. No text. {G32}"),
 })
 
+ANI = ("Each portrait is a cute round character face with big shiny eyes inside a colored round badge with a thin white rim, clearly different animals with unmistakable features. ")
+TILE = ("Each item is a simple, instantly recognizable symbol on a glossy rounded-square tile with a thin white rim. ")
+MED = ("Each item is a round gold achievement medal with a colored ribbon below and ONE simple symbol in the middle. ")
+SHEETS.update({
+ "avatars_a_v4": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 avatars. {ANI}Reading order: 1 orange fox with pointed ears, 2 black and white panda, 3 pink cat with whiskers, 4 dark brown owl with two feather ear tufts and a small orange beak (NOT green), 5 bright green frog with wide eyes on top of its head, 6 golden lion with a mane. {G32}"),
+ "avatars_b_v4": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 avatars. {ANI}Reading order: 1 white bunny with long ears, 2 blue and white penguin with an orange beak, 3 grey koala with big round ears, 4 green baby dragon with small horns, 5 silver robot with a screen face, 6 wizard with a blue pointed hat and white beard. {G32}"),
+ "cats_a_v4": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 category icons. {TILE}Reading order: 1 paw print on a yellow tile, 2 hamburger on an orange tile, 3 earth globe on a blue tile, 4 soccer ball on a green tile, 5 rocket on a purple tile, 6 leafy tree on a mint tile. {G32}"),
+ "cats_b_v4": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 category icons. {TILE}Reading order: 1 film clapperboard on a dark purple tile, 2 computer chip on a teal tile, 3 music note on a magenta tile, 4 red heart on a pink tile, 5 blue fish over waves on a sky-blue tile, 6 stone castle on a gold tile. {G32}"),
+ "medals_a_v4": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 4 medals in a grid of 2 columns and 2 rows. {MED}Reading order: 1 magnifying glass, 2 flame, 3 lightning bolt, 4 compass. Wide gaps, transparent background, no labels."),
+ "medals_b_v4": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 4 medals in a grid of 2 columns and 2 rows. {MED}Reading order: 1 calendar with a check mark, 2 crown, 3 open book, 4 star. Wide gaps, transparent background, no labels."),
+ "core_a_v4": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 icons, reading order: 1 gold coin with an embossed star, 2 small stack of three gold star coins, 3 red gift box with gold ribbon, 4 wooden treasure chest with gold trim, 5 gold padlock, 6 round green badge with a white check mark. {G32}"),
+ "core_b_v4": ("1536x1024", True, [REF_SHOP], f"{STYLE} {SMALL}A sprite sheet of 6 icons, reading order: 1 gold five-point star, 2 pale grey five-point star, 3 small blue four-point sparkle star, 4 round glowing pink confetti dot, 5 round yellow confetti dot, 6 small white fluffy cloud. {G32}"),
+})
+
 
 def main(names):
     force = "--force" in names

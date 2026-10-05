@@ -117,46 +117,13 @@ namespace WordQuest
             }
         }
 
-        public static string DailyTheme(DateTime d)
-        {
-            switch (d.DayOfWeek)
-            {
-                case DayOfWeek.Monday: return "Animals";
-                case DayOfWeek.Tuesday: return "Food";
-                case DayOfWeek.Wednesday: return "Places";
-                case DayOfWeek.Thursday: return "Movies";
-                case DayOfWeek.Friday: return "Random";
-                case DayOfWeek.Saturday: return "Challenge";
-                default: return "Championship";
-            }
-        }
-
+        /// <summary>Daily Quest: the same board size and difficulty every day (8x8, medium); only the words change.</summary>
         public static LevelSpec Daily(DateTime date)
         {
             string key = date.ToString("yyyy-MM-dd");
             int seed = DateSeed(key);
-            int cat;
-            switch (date.DayOfWeek)
-            {
-                case DayOfWeek.Monday: cat = 0; break;
-                case DayOfWeek.Tuesday: cat = 1; break;
-                case DayOfWeek.Wednesday: cat = 2; break;
-                case DayOfWeek.Thursday: cat = 6; break;
-                default: cat = seed % WordBank.Count; break;
-            }
-            int day = (int)date.DayOfWeek; // Sunday = 0
-            LevelSpec s;
-            switch (date.DayOfWeek)
-            {
-                case DayOfWeek.Monday:
-                case DayOfWeek.Tuesday: s = Get(30); break;         // easy
-                case DayOfWeek.Wednesday:
-                case DayOfWeek.Thursday: s = Get(60); break;        // medium
-                case DayOfWeek.Friday:
-                case DayOfWeek.Saturday: s = Get(90); break;        // hard
-                default: s = Get(130); break;                       // Sunday: championship
-            }
-            s.Index = 0; s.IsDaily = true; s.DailyDate = key; s.Seed = seed; s.Category = cat;
+            var s = Get(60);
+            s.Index = 0; s.IsDaily = true; s.DailyDate = key; s.Seed = seed; s.Category = seed % WordBank.Count;
             return s;
         }
     }

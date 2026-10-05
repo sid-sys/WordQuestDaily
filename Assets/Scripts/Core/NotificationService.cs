@@ -153,6 +153,8 @@ namespace WordQuest
                 var n = new AndroidNotification { Title = p.Title, Text = p.Text, FireTime = p.When, SmallIcon = "icon_small", LargeIcon = "icon_large", ShouldAutoCancel = true };
                 AndroidNotificationCenter.SendNotification(n, Channel);
             }
+            if (Debug.isDebugBuild)   // test builds only: one extra notification 25 seconds after the app is left
+                AndroidNotificationCenter.SendNotification(new AndroidNotification { Title = Title, Text = "Test: notifications work!", FireTime = DateTime.Now.AddSeconds(25), SmallIcon = "icon_small", LargeIcon = "icon_large", ShouldAutoCancel = true }, Channel);
         }
 
         public static void CancelAll()

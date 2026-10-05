@@ -152,7 +152,7 @@ namespace WordQuest
             var p = OpenPopup("DAILY QUEST", 940, 980, true, "ribbon_pink");
             var c = p.Content;
             var icon = UI.Icon(c, WordBank.Get(q.Category).ArtKey, 210, "Cat"); UI.Place(icon.rectTransform, 0.5f, 1, 0, -170, 210, 210);
-            var theme = UI.Label(c, Levels.DailyTheme(Clock.Today).ToUpper() + " DAY", 56, Palette.Ink); UI.Place(theme.rectTransform, 0.5f, 1, 0, -330, 800, 70);
+            var theme = UI.Label(c, WordBank.Get(q.Category).Name.ToUpper(), 56, Palette.Ink); UI.Place(theme.rectTransform, 0.5f, 1, 0, -330, 800, 70);
             var meta = UI.Label(c, $"{WordBank.Get(q.Category).Name}  -  {q.Cols}x{q.Rows}  -  {q.WordCount} words", 34, Palette.InkSoft); UI.Place(meta.rectTransform, 0.5f, 1, 0, -398, 800, 44);
             var dif = UI.Label(c, Levels.DiffName(q.Diff).ToUpper(), 38, Levels.DiffColor(q.Diff)); UI.Place(dif.rectTransform, 0.5f, 1, 0, -450, 800, 48);
             if (!done)
