@@ -19,12 +19,12 @@ namespace WordQuest
             "Marks where every word starts",
             "Finds a whole word for you"
         };
-        public static readonly int[] Cost = { 150, 200, 250, 350, 500 };
-        public static readonly int[] Max = { 5, 5, 3, 3, 2 };
-        public static readonly int[] FreeEvery = { 5, 10, 15, 20, 25 };   // completed levels per free power-up
+        public static readonly int[] Cost = { 150, 200, 250, 350, 400 };
+        public static readonly int[] Max = { 0, 0, 0, 0, 3 };
+        public static readonly int[] FreeEvery = { 0, 0, 0, 0, 10 };   // completed levels per free power-up (only Reveal Word exists)
         public static readonly int[] UnlockLevel = { 3, 1, 7, 12, 18 };   // level whose tutorial unlocks each power-up
         public static readonly string[] Art = { "pu_shuffle", "pu_hint", "pu_letter", "pu_finder", "pu_word" };
-        public static readonly PowerUp[] All = { PowerUp.Shuffle, PowerUp.Hint, PowerUp.Letter, PowerUp.Finder, PowerUp.Word };
+        public static readonly PowerUp[] All = { PowerUp.Word };   // the only power-up left in the game
 
         public static int Count(PlayerData d, PowerUp p) => d.powers[(int)p];
         public static bool IsFull(PlayerData d, PowerUp p) => d.powers[(int)p] >= Max[(int)p];
@@ -59,13 +59,13 @@ namespace WordQuest
     {
         public static readonly Bundle[] All =
         {
-            new Bundle { Id = "bundle_starter", Name = "Starter Pack", Ribbon = "SPECIAL OFFER", Art = "coin_stack", Strip = "btn_purple", Coins = 500, Powers = new[] { 2, 1, 1, 0, 0 }, TargetPrice = "Rs 99" },
-            new Bundle { Id = "bundle_player", Name = "Player Pack", Art = "pack_pile", Strip = "btn_yellow", Coins = 1500, Powers = new[] { 4, 3, 2, 0, 0 }, TargetPrice = "Rs 299" },
-            new Bundle { Id = "bundle_power", Name = "Power Pack", Ribbon = "BEST VALUE", Art = "pack_pile", Strip = "btn_blue", Coins = 3000, Powers = new[] { 8, 5, 3, 2, 0 }, TargetPrice = "Rs 599" },
-            new Bundle { Id = "bundle_mega", Name = "Mega Pack", Art = "pack_heap", Strip = "btn_pink", Coins = 5000, Powers = new[] { 10, 7, 5, 3, 1 }, ExclusiveEffect = 4, TargetPrice = "Rs 999" },
+            new Bundle { Id = "bundle_starter", Name = "Starter Pack", Ribbon = "SPECIAL OFFER", Art = "coin_stack", Strip = "btn_purple", Coins = 500, Powers = new[] { 0, 0, 0, 0, 1 }, TargetPrice = "Rs 99" },
+            new Bundle { Id = "bundle_player", Name = "Player Pack", Art = "pack_pile", Strip = "btn_yellow", Coins = 1500, Powers = new[] { 0, 0, 0, 0, 2 }, TargetPrice = "Rs 299" },
+            new Bundle { Id = "bundle_power", Name = "Power Pack", Ribbon = "BEST VALUE", Art = "pack_pile", Strip = "btn_blue", Coins = 3000, Powers = new[] { 0, 0, 0, 0, 4 }, TargetPrice = "Rs 599" },
+            new Bundle { Id = "bundle_mega", Name = "Mega Pack", Art = "pack_heap", Strip = "btn_pink", Coins = 5000, Powers = new[] { 0, 0, 0, 0, 6 }, ExclusiveEffect = 4, TargetPrice = "Rs 999" },
         };
         public const string AdFreePlus = "remove_ads_plus";     // remove ads + a small starter kit (non-consumable, kit given once)
-        public static readonly Bundle AdFreeKit = new Bundle { Id = AdFreePlus, Name = "Ad-Free Plus", Coins = 1000, Powers = new[] { 2, 2, 1, 1, 0 }, TargetPrice = "Rs 399" };
+        public static readonly Bundle AdFreeKit = new Bundle { Id = AdFreePlus, Name = "Ad-Free Plus", Coins = 1000, Powers = new[] { 0, 0, 0, 0, 2 }, TargetPrice = "Rs 399" };
         public static Bundle Find(string id) { foreach (var b in All) if (b.Id == id) return b; return id == AdFreePlus ? AdFreeKit : null; }
     }
 
@@ -101,12 +101,12 @@ namespace WordQuest
         public static readonly Reward[] Daily =
         {
             new Reward { Coins = 100, Power = -1, Label = "100 coins" },
-            new Reward { Coins = 0, Power = (int)PowerUp.Shuffle, PowerCount = 1, Label = "1 Shuffle" },
+            new Reward { Coins = 0, Power = (int)PowerUp.Word, PowerCount = 1, Label = "1 Reveal Word" },
             new Reward { Coins = 150, Power = -1, Label = "150 coins" },
-            new Reward { Coins = 0, Power = (int)PowerUp.Hint, PowerCount = 1, Label = "1 Hint" },
+            new Reward { Coins = 250, Power = -1, Label = "250 coins" },
             new Reward { Coins = 200, Power = -1, Label = "200 coins" },
-            new Reward { Coins = 0, Power = (int)PowerUp.Letter, PowerCount = 1, Label = "1 Reveal Letter" },
-            new Reward { Coins = 300, Power = (int)PowerUp.Shuffle, PowerCount = 1, Label = "300 coins + Shuffle" },
+            new Reward { Coins = 0, Power = (int)PowerUp.Word, PowerCount = 1, Label = "1 Reveal Word" },
+            new Reward { Coins = 300, Power = (int)PowerUp.Word, PowerCount = 1, Label = "300 coins + Reveal Word" },
         };
 
         // ---- what unlocks at which player level ----

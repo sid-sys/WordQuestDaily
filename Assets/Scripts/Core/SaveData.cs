@@ -22,7 +22,7 @@ namespace WordQuest
         public int coins = 300;
         public int xp;
         public int playerLevel = 1;
-        public int[] powers = { 2, 2, 1, 1, 0 };          // shuffle, hint, letter, finder, word
+        public int[] powers = { 0, 0, 0, 0, 2 };          // only the last one (Reveal Word) is used now
 
         // progress
         public int[] stars = new int[Levels.Total + 1];    // index = level, 0..3
@@ -98,6 +98,7 @@ namespace WordQuest
         {
             if (d.stars == null || d.stars.Length < Levels.Total + 1) { var n = new int[Levels.Total + 1]; if (d.stars != null) Array.Copy(d.stars, n, Mathf.Min(d.stars.Length, n.Length)); d.stars = n; }
             if (d.powers == null || d.powers.Length < 5) { var n = new[] { 0, 0, 0, 0, 0 }; if (d.powers != null) Array.Copy(d.powers, n, Mathf.Min(d.powers.Length, 5)); d.powers = n; }
+            for (int i = 0; i < 4; i++) if (d.powers[i] > 0) { d.coins += d.powers[i] * PowerUps.Cost[i] / 2; d.powers[i] = 0; }   // removed power-ups are paid back as coins
             if (d.powerUnlocked == null || d.powerUnlocked.Length < 5) d.powerUnlocked = new bool[5];
             d.ring = 0; d.theme = 0;                      // frames and board themes were removed
             if (d.avatarOwned == null || d.avatarOwned.Length < 12) d.avatarOwned = new bool[12];

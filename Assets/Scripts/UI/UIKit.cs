@@ -24,12 +24,14 @@ namespace WordQuest
         public static readonly Color Teal = new Color32(0x1F, 0xB5, 0xA8, 255);
         public static readonly Color Grey = new Color32(0xA9, 0xB3, 0xC7, 255);
 
-        /// <summary>Capsule colors taken from the reference picture: yellow, purple, green, blue, magenta, red.</summary>
+        /// <summary>Swipe colors: red, green, blue, yellow, violet.</summary>
         public static readonly Color[] Capsules =
         {
-            new Color32(0xF9, 0xBB, 0x13, 255), new Color32(0x92, 0x4E, 0xF3, 255), new Color32(0x41, 0xC0, 0x38, 255),
-            new Color32(0x17, 0x8A, 0xDC, 255), new Color32(0xE0, 0x52, 0xD6, 255), new Color32(0xF1, 0x4D, 0x53, 255),
+            new Color32(0xF1, 0x4D, 0x53, 255), new Color32(0x41, 0xC0, 0x38, 255), new Color32(0x17, 0x8A, 0xDC, 255),
+            new Color32(0xF9, 0xBB, 0x13, 255), new Color32(0x92, 0x4E, 0xF3, 255),
         };
+        public static readonly Color PanelGrey = new Color32(0xEE, 0xF0, 0xF3, 255);
+        public static readonly Color WordTodo = new Color32(0xB9, 0xBD, 0xC5, 255);
     }
 
     /// <summary>Loads sprites from Resources/Art by name.</summary>

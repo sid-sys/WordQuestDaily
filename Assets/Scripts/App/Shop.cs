@@ -84,7 +84,7 @@ namespace WordQuest
             }
 
             // ---- power-ups for coins ----
-            var head = UI.Label(content, "POWER-UPS", 52, Color.white, TextAnchor.MiddleCenter, true);
+            var head = UI.Label(content, "REVEAL WORD", 52, Color.white, TextAnchor.MiddleCenter, true);
             head.GetComponent<Outline>().effectColor = new Color32(0x12, 0x4A, 0xA8, 255);
             UI.Place(head.rectTransform, 0.5f, 1, 0, -(y + 46), 800, 70); y += 96;
             foreach (var pu in PowerUps.All)

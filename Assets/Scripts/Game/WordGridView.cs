@@ -46,9 +46,7 @@ namespace WordQuest
 
         public static Color ColorFor(int eff, int index)
         {
-            Color[] set = eff >= 0 && eff < EffectColors.Length ? EffectColors[eff] : null;
-            if (eff == 4) return Color.HSVToRGB((index * 0.13f) % 1f, 0.85f, 1f);
-            if (set == null) set = Palette.Capsules;
+            var set = Palette.Capsules;   // every effect swipes in the same five colors
             return set[index % set.Length];
         }
 

@@ -20,15 +20,13 @@ namespace WordQuest
         public RectTransform Banner;
         public readonly Dictionary<string, RectTransform> Chips = new Dictionary<string, RectTransform>();
         public RectTransform MysteryChip;
-        public readonly List<Text> PowerCounts = new List<Text>();
-        public readonly List<Image> PowerIcons = new List<Image>();
+        public Text RevealCount; public Image RevealBadge; public RectTransform RevealButton;
         public int PowerupsUsed, FoundCount, Shuffles;
         public bool MysteryFound, MysterySkipped, Finished, Busy;
         public float LastFoundTime;
         public Button SkipButton;
         public Image CurrentPill; public Text CurrentText;
         public RectTransform TutLayer; public TutorialState Tut;
-        public readonly List<Image> PowerLocks = new List<Image>();
         public string Msg, PillText; public Color PillColor; public bool Dragging;
     }
 
@@ -106,15 +104,16 @@ namespace WordQuest
             var root = g.Root;
             float rootH = safe.rect.height;
 
-            // --- HUD like the reference: coins left, level pill middle, pause right ---
+            // --- HUD: pause top left, coins, level pill, Reveal Word top right ---
+            MakePauseButton(root, 96, ShowPause);
+            UI.Place((RectTransform)root.Find("Pause"), 0, 1, 70, -72, 96, 96);
             var coins = CoinPill(root, false);
-            UI.Place(coins, 0, 1, 20 + 160, -72, 320, 92);
-            var lvPill = UI.Pill(root, "btn_blue", spec.IsDaily ? "Daily" : "Level " + spec.Index, 330, 84, () => { }, 46);
-            UI.Place((RectTransform)lvPill.transform, 0.5f, 1, 30, -72, 330, 84);
+            UI.Place(coins, 0, 1, 130 + 150, -72, 300, 92);
+            var lvPill = UI.Pill(root, "btn_blue", spec.IsDaily ? "Daily" : "Level " + spec.Index, 290, 84, () => { }, 46);
+            UI.Place((RectTransform)lvPill.transform, 0.5f, 1, 150, -72, 290, 84);
             lvPill.transition = Selectable.Transition.None;
             var cat = WordBank.Get(puzzle.CategoryIndex);
-            MakePauseButton(root, 96, ShowPause);
-            UI.Place((RectTransform)root.Find("Pause"), 1, 1, -70, -72, 96, 96);
+            BuildRevealButton(root);
 
             // --- two progress bars side by side: this level, and the word collection ---
             g.LevelBar = UI.ProgressBar(root, 520, 44, Palette.Green, "LevelBar");
@@ -146,18 +145,16 @@ namespace WordQuest
             g.Banner.gameObject.SetActive(false);
 
             // --- board: a big white card, as wide as the screen allows ---
-            float powerH = 230;
             float boardTop = pillY + 76 + 14;
-            float availH = rootH - boardTop - powerH - 24, availW = 1080 - 40 - 32;
+            float availH = rootH - boardTop - 40, availW = 1080 - 40 - 32;
             float cell = Mathf.Min(availW / puzzle.Cols, availH / puzzle.Rows, 190f);
             float bw = cell * puzzle.Cols, bh = cell * puzzle.Rows;
             var boardHolder = UI.Node(root, "Board");
             float extra = Mathf.Max(0f, availH - bh);
-            float boardCenterY = -(boardTop + Mathf.Min(extra * 0.35f, 120f) + (bh + 36) / 2f);
+            float boardCenterY = -(boardTop + Mathf.Min(extra * 0.45f, 260f) + (bh + 36) / 2f);
             UI.Place(boardHolder, 0.5f, 1, 0, boardCenterY, bw + 36, bh + 36);
-            var panel = UI.Round(boardHolder, Color.white, 34, "Panel");
+            var panel = UI.Round(boardHolder, Palette.PanelGrey, 34, "Panel");
             UI.Stretch(panel.rectTransform);
-            panel.gameObject.AddComponent<Shadow>().effectColor = new Color(0, 0, 0, 0.25f);
             var gridRt = UI.Node(boardHolder, "Grid");
             UI.Place(gridRt, 0.5f, 0.5f, 0, 0, bw, bh);
             g.Grid = gridRt.gameObject.AddComponent<WordGridView>();
@@ -177,8 +174,6 @@ namespace WordQuest
             };
             Fx.PopIn(boardHolder, 0.4f);
 
-            // --- power-ups ---
-            BuildPowerBar(root, powerH);
             g.TutLayer = UI.Stretch(UI.Node(root, "Tutorial"));
             UpdateProgress(false);
         }
@@ -218,7 +213,7 @@ namespace WordQuest
             int rows = Mathf.CeilToInt(n / (float)cols);
             float rowH = (n > 12 ? 44f : 52f) * scale, padY = 18 * scale;
             float w = 1000, h = rows * rowH + padY * 2;
-            var panel = UI.Sliced(root, "card_a", h, "WordList");
+            var panel = UI.Round(root, Palette.PanelGrey, 36, "WordList");
             UI.Place(panel.rectTransform, 0.5f, 1, 0, -(top + h / 2), w, h);
             int fontSize = Mathf.RoundToInt((n > 12 ? 30 : 36) * scale);
             for (int i = 0; i < n; i++)
@@ -229,7 +224,7 @@ namespace WordQuest
                 float cw = (w - 40) / cols;
                 UI.Place(cell, 0, 1, 20 + cw * (c + 0.5f), -(padY + rowH * (r + 0.5f)), cw, rowH);
                 string label = mystery ? new string('?', g.Puzzle.Mystery.Word.Length) : words[i];
-                var t = UI.Label(cell, label, fontSize, mystery ? Palette.Purple : Color.black, TextAnchor.MiddleCenter, false);
+                var t = UI.Label(cell, label, fontSize, mystery ? Palette.Purple : Palette.WordTodo, TextAnchor.MiddleCenter, false);
                 UI.Stretch(t.rectTransform);
                 if (mystery) { g.MysteryChip = cell; }
                 else g.Chips[words[i]] = cell;
@@ -237,51 +232,31 @@ namespace WordQuest
             return top + h;
         }
 
-        void BuildPowerBar(RectTransform root, float h)
+        /// <summary>Reveal Word, the only power-up: a bulb button top right with the number you own.</summary>
+        void BuildRevealButton(RectTransform root)
         {
-            var g = game; var d = SaveSystem.Data;
-            // dark blue band across the bottom, with a lighter top edge (like the reference)
-            var band = UI.Solid(root, new Color32(0x1B, 0x3E, 0xA6, 255), "PowerBand", true);
-            var br = band.rectTransform; br.anchorMin = new Vector2(0, 0); br.anchorMax = new Vector2(1, 0); br.pivot = new Vector2(0.5f, 0); br.anchoredPosition = Vector2.zero; br.sizeDelta = new Vector2(0, h - 20);
-            var edge = UI.Solid(root, new Color32(0x5C, 0x8E, 0xF0, 255), "PowerEdge");
-            var er = edge.rectTransform; er.anchorMin = new Vector2(0, 0); er.anchorMax = new Vector2(1, 0); er.pivot = new Vector2(0.5f, 0); er.anchoredPosition = new Vector2(0, h - 20); er.sizeDelta = new Vector2(0, 8);
-            var bar = UI.Node(root, "PowerBar");
-            UI.Place(bar, 0.5f, 0, 0, (h - 20) / 2f, 1040, h - 20);
-            float tile = 150, gap = (1040 - 5 * tile) / 4f;
-            for (int i = 0; i < 5; i++)
-            {
-                var pu = PowerUps.All[i];
-                var btn = UI.GlyphButton(bar, PowerUps.Art[i], new Color32(0x2F, 0x8D, 0xF0, 255), tile, "Pw" + i, 0.78f);
-                UI.Place(btn.rectTransform, 0, 0.5f, tile / 2 + i * (tile + gap), 0, tile, tile);
-                UI.Click(btn, () => UsePower(pu));
-                var glyph = btn.transform.Find("Glyph").GetComponent<Image>();
-                g.PowerIcons.Add(glyph);
-                var rim = UI.Node(btn.transform, "BadgeRim").gameObject.AddComponent<Image>(); rim.sprite = Shapes.Circle(); rim.color = Color.white; rim.raycastTarget = false;
-                rim.rectTransform.anchorMin = rim.rectTransform.anchorMax = new Vector2(1, 0); rim.rectTransform.anchoredPosition = new Vector2(-6, 12); rim.rectTransform.sizeDelta = new Vector2(64, 64);
-                var badge = UI.Node(btn.transform, "Badge").gameObject.AddComponent<Image>();
-                badge.sprite = Shapes.Circle(); badge.color = Palette.Red; badge.raycastTarget = false;
-                badge.rectTransform.anchorMin = badge.rectTransform.anchorMax = new Vector2(1, 0); badge.rectTransform.anchoredPosition = new Vector2(-6, 12); badge.rectTransform.sizeDelta = new Vector2(52, 52);
-                var cnt = UI.Label(badge.transform, "", 30, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(cnt.rectTransform);
-                cnt.GetComponent<Outline>().effectColor = new Color32(0x70, 0x10, 0x20, 255);
-                g.PowerCounts.Add(cnt);
-                var lk = UI.Icon(btn.transform, "lock", 56, "Lock"); UI.Place(lk.rectTransform, 1, 0, -30, 30, 56, 56); g.PowerLocks.Add(lk);
-            }
+            var g = game;
+            var btn = UI.GlyphButton(root, "g_bulb", new Color32(0xF5, 0xA6, 0x23, 255), 96, "Reveal", 0.6f);
+            UI.Place(btn.rectTransform, 1, 1, -70, -72, 96, 96);
+            UI.Click(btn, () => UsePower(PowerUp.Word));
+            g.RevealButton = btn.rectTransform;
+            var rim = UI.Node(btn.transform, "BadgeRim").gameObject.AddComponent<Image>(); rim.sprite = Shapes.Circle(); rim.color = Color.white; rim.raycastTarget = false;
+            rim.rectTransform.anchorMin = rim.rectTransform.anchorMax = new Vector2(0, 0); rim.rectTransform.anchoredPosition = new Vector2(8, 8); rim.rectTransform.sizeDelta = new Vector2(52, 52);
+            var badge = UI.Node(btn.transform, "Badge").gameObject.AddComponent<Image>();
+            badge.sprite = Shapes.Circle(); badge.color = Palette.Red; badge.raycastTarget = false;
+            badge.rectTransform.anchorMin = badge.rectTransform.anchorMax = new Vector2(0, 0); badge.rectTransform.anchoredPosition = new Vector2(8, 8); badge.rectTransform.sizeDelta = new Vector2(42, 42);
+            g.RevealBadge = badge;
+            g.RevealCount = UI.Label(badge.transform, "", 26, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(g.RevealCount.rectTransform);
+            g.RevealCount.GetComponent<Outline>().effectColor = new Color32(0x70, 0x10, 0x20, 255);
             RefreshPowerBar();
         }
 
         void RefreshPowerBar()
         {
-            var g = game; if (g == null) return; var d = SaveSystem.Data;
-            for (int i = 0; i < 5; i++)
-            {
-                int n = d.powers[i]; bool open = d.powerUnlocked[i] || (g.Tut != null && g.Tut.Kind == 2 && g.Tut.Power == i);
-                g.PowerCounts[i].text = n > 0 ? n.ToString() : "+";
-                var badge = g.PowerCounts[i].transform.parent.GetComponent<Image>();
-                badge.color = n > 0 ? Palette.Red : Palette.Green;
-                badge.gameObject.SetActive(open); badge.transform.parent.Find("BadgeRim").gameObject.SetActive(open);
-                g.PowerLocks[i].gameObject.SetActive(!open);
-                g.PowerIcons[i].color = !open ? new Color(0.35f, 0.35f, 0.4f, 0.9f) : n > 0 ? Color.white : new Color(1, 1, 1, 0.65f);
-            }
+            var g = game; if (g == null || g.RevealCount == null) return;
+            int n = SaveSystem.Data.powers[(int)PowerUp.Word];
+            g.RevealCount.text = n > 0 ? n.ToString() : "+";
+            g.RevealBadge.color = n > 0 ? Palette.Red : Palette.Green;
         }
 
         // =============== progress ===============
@@ -325,14 +300,10 @@ namespace WordQuest
             g.PillText = p.Word; g.PillColor = grid.LastColor;
             UpdateSlot();
             if (g.CurrentPill != null && g.CurrentPill.gameObject.activeSelf) Fx.Punch(g.CurrentPill.rectTransform, 0.15f, 0.3f);
-            // strike the word through in the list
+            // a found word turns black in the list
             if (g.Chips.TryGetValue(p.Word, out var chip))
             {
-                var t = chip.GetComponentInChildren<Text>(); t.color = new Color(0.55f, 0.57f, 0.63f);
-                var strike = UI.Solid(chip, new Color(0.2f, 0.22f, 0.3f, 0.95f), "Strike");
-                UI.Place(strike.rectTransform, 0.5f, 0.5f, 0, 0, 0, 5);
-                float full = t.preferredWidth + 10;
-                Fx.Tween(0.3f, k => { if (strike != null) strike.rectTransform.sizeDelta = new Vector2(full * k, 5); });
+                chip.GetComponentInChildren<Text>().color = Color.black;
                 Fx.Punch(chip, 0.18f, 0.35f);
             }
             Fx.FloatText(fxLayer, midPos, isNew ? "NEW WORD!" : "+1 WORD", isNew ? Palette.Yellow : Color.white, 48);
@@ -417,8 +388,7 @@ namespace WordQuest
             {
                 var chip = g.MysteryChip;
                 var pu = chip.GetComponent<Pulse>(); if (pu != null) Destroy(pu);
-                var mt = chip.GetComponentInChildren<Text>(); mt.text = target; mt.color = new Color(0.55f, 0.57f, 0.63f);
-                var strike = UI.Solid(chip, new Color(0.2f, 0.22f, 0.3f, 0.95f), "Strike"); UI.Place(strike.rectTransform, 0.5f, 0.5f, 0, 0, mt.preferredWidth + 10, 5);
+                var mt = chip.GetComponentInChildren<Text>(); mt.text = target; mt.color = Color.black;
             }
             UpdateProgress(true);
             g.Busy = false; g.Grid.InputEnabled = true;
@@ -442,14 +412,8 @@ namespace WordQuest
         // =============== power-ups ===============
         void UsePower(PowerUp pu)
         {
-            var g = game; if (g == null || g.Finished || g.Busy) return;
+            var g = game; if (g == null || g.Finished || g.Busy || pu != PowerUp.Word) return;
             var d = SaveSystem.Data;
-            bool taught = g.Tut != null && g.Tut.Kind == 2 && g.Tut.Power == (int)pu;
-            if (!d.powerUnlocked[(int)pu] && !taught)
-            {
-                Toast($"{PowerUps.Names[(int)pu]} unlocks on level {PowerUps.UnlockLevel[(int)pu]}", Palette.Yellow); Sfx.Play(Sfx.Kind.Error); return;
-            }
-            if (g.Tut != null && g.Tut.Kind == 2 && !taught) return;   // during a lesson only the taught power-up works
             if (PowerUps.Count(d, pu) <= 0) { ShowBuyPower(pu); return; }
             var remaining = g.Puzzle.AllPlacements().Where(w => !w.Found).ToList();
             var normal = remaining.Where(w => !w.IsMystery).ToList();
@@ -458,50 +422,17 @@ namespace WordQuest
             var rng = new System.Random(g.Puzzle.Words.Count * 31 + g.PowerupsUsed * 7 + (int)(Time.unscaledTime * 10));
             var target = pool[rng.Next(pool.Count)];
             var grid = g.Grid;
-            switch (pu)
-            {
-                case PowerUp.Hint:
-                    grid.ClearMarks();
-                    grid.MarkCell(target.X, target.Y, Palette.Yellow, "Hint");
-                    Fx.Burst(fxLayer, grid.CellCanvas(target.X, target.Y, fxLayer), "spark_star", Palette.Yellow, 8, 260f, 0.6f);
-                    break;
-                case PowerUp.Letter:
-                    {
-                        int k = target.Length > 1 ? rng.Next(1, target.Length) : 0;
-                        var c = target.Cell(k);
-                        grid.MarkCell(c.x, c.y, new Color(0.4f, 0.75f, 1f), "Letter");
-                        Fx.Burst(fxLayer, grid.CellCanvas(c.x, c.y, fxLayer), "spark_star", new Color(0.4f, 0.75f, 1f), 8, 260f, 0.6f);
-                        break;
-                    }
-                case PowerUp.Finder:
-                    // Marks only the letter every remaining word STARTS on: the player still has to find the way it runs.
-                    grid.ClearMarks();
-                    foreach (var w in g.Puzzle.Words) if (!w.Found) { grid.MarkCell(w.X, w.Y, Palette.Purple, "Finder"); Fx.Burst(fxLayer, grid.CellCanvas(w.X, w.Y, fxLayer), "spark_star", Palette.Purple, 6, 240f, 0.6f); }
-                    break;
-                case PowerUp.Word:
-                    {
-                        target.Found = true;
-                        Color color = target.IsMystery ? (Color)new Color32(0xFF, 0xC8, 0x2E, 255) : grid.NextColor();
-                        grid.ClearMarks();
-                        grid.LockWord(target, color, true);
-                        OnWordFound(target, new Vector2Int(target.X, target.Y), target.End);
-                        break;
-                    }
-                case PowerUp.Shuffle:
-                    {
-                        if (!PuzzleGenerator.Reshuffle(g.Puzzle, g.Spec, g.Spec.Seed + 97 * (++g.Shuffles))) { Toast("Could not shuffle", Palette.Red); return; }
-                        grid.Refresh(true);
-                        Sfx.Play(Sfx.Kind.Whoosh);
-                        break;
-                    }
-            }
+            target.Found = true;
+            Color color = target.IsMystery ? (Color)new Color32(0xFF, 0xC8, 0x2E, 255) : grid.NextColor();
+            grid.ClearMarks();
+            grid.LockWord(target, color, true);
+            OnWordFound(target, new Vector2Int(target.X, target.Y), target.End);
             PowerUps.Use(d, pu);
             g.PowerupsUsed++;
             Progress.Notify();
-            Sfx.Play(pu == PowerUp.Shuffle ? Sfx.Kind.Whoosh : Sfx.Kind.Power, 1f + (int)pu * 0.1f);
+            Sfx.Play(Sfx.Kind.Power, 1.4f);
             RefreshPowerBar();
-            Fx.Punch(g.PowerIcons[(int)pu].rectTransform, 0.25f, 0.35f);
-            TutorialPowerUsed(pu);
+            Fx.Punch(g.RevealButton, 0.25f, 0.35f);
         }
 
         void ShowBuyPower(PowerUp pu)

@@ -143,13 +143,12 @@ namespace WordQuest
                 D.coins += Economy.MilestoneCoins; r.BonusCoins += Economy.MilestoneCoins;
                 r.Lines.Add($"+{Economy.MilestoneCoins} coins ({n} levels done)");
             }
-            for (int i = 0; i < PowerUps.All.Length; i++)
-                if (n % PowerUps.FreeEvery[i] == 0)
-                {
-                    var p = PowerUps.All[i];
-                    if (PowerUps.Add(D, p)) r.Lines.Add("Free " + PowerUps.Names[i]);
-                    else { D.coins += PowerUps.Cost[i] / 2; r.BonusCoins += PowerUps.Cost[i] / 2; r.Lines.Add($"{PowerUps.Names[i]} is full: +{PowerUps.Cost[i] / 2} coins"); }
-                }
+            const int w = (int)PowerUp.Word;
+            if (n % PowerUps.FreeEvery[w] == 0)
+            {
+                if (PowerUps.Add(D, PowerUp.Word)) r.Lines.Add("Free " + PowerUps.Names[w]);
+                else { D.coins += PowerUps.Cost[w] / 2; r.BonusCoins += PowerUps.Cost[w] / 2; r.Lines.Add($"{PowerUps.Names[w]} is full: +{PowerUps.Cost[w] / 2} coins"); }
+            }
         }
 
         // ---------------- collection ----------------
@@ -247,7 +246,7 @@ namespace WordQuest
                     switch (i)
                     {
                         case 0: D.coins += 100; break;
-                        case 1: PowerUps.Add(D, PowerUp.Hint); break;
+                        case 1: PowerUps.Add(D, PowerUp.Word); break;
                         case 2: D.ringOwned[1] = true; break;
                         case 3: D.avatarOwned[9] = true; break;
                         case 4: D.coins += 500; break;
@@ -309,7 +308,7 @@ namespace WordQuest
             if (b == null) return "";
             if (firstTimeOnly) { if (D.adFreeKitClaimed) return ""; D.adFreeKitClaimed = true; }
             D.coins += b.Coins;
-            for (int i = 0; i < 5; i++) if (b.Powers[i] > 0) PowerUps.Add(D, PowerUps.All[i], b.Powers[i], true);
+            for (int i = 0; i < 5; i++) if (b.Powers[i] > 0) PowerUps.Add(D, (PowerUp)i, b.Powers[i], true);
             if (b.ExclusiveEffect >= 0) D.effectOwned[b.ExclusiveEffect] = true;
             Notify();
             return b.Name;

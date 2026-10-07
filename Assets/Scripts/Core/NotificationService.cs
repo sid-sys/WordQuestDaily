@@ -112,9 +112,8 @@ namespace WordQuest
 
         static int LevelsToNextPowerUp(PlayerData d)
         {
-            int n = d.levelsCompleted, best = int.MaxValue;
-            foreach (int every in PowerUps.FreeEvery) { int left = every - (n % every); if (left < best) best = left; }
-            return best == int.MaxValue ? 0 : best;
+            int every = PowerUps.FreeEvery[(int)PowerUp.Word];
+            return every - (d.levelsCompleted % every);
         }
 
         // =============== Android glue ===============
