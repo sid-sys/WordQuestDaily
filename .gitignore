@@ -32,3 +32,4 @@ KEYSTORE-INFO.txt
 
 # Android build temp files
 .utmp/
+brag-output/
