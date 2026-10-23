@@ -15,7 +15,7 @@ namespace WordQuest
         const string TestInterstitial = "ca-app-pub-3940256099942544/1033173712";
         const string TestRewarded = "ca-app-pub-3940256099942544/5224354917";
         const string TestBanner = "ca-app-pub-3940256099942544/6300978111";
-        const string RealBanner = "";          // TODO: create a Banner ad unit in AdMob and paste its id here. Empty = no banner in release builds.
+        const string RealBanner = "ca-app-pub-2778983812131153/8922116473";
 
         public static bool UseTest => Application.isEditor || Debug.isDebugBuild;
         public static string Interstitial => UseTest ? TestInterstitial : RealInterstitial;
