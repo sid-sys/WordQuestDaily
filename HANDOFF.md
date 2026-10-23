@@ -18,13 +18,18 @@ Word-search mobile game. Unity 6000.6.0f1, URP 2D, portrait, Android only. Packa
 - This change was checked only in the Unity editor (portrait screenshots, no layout problems except a known false alarm on the SKIP button). **It was never run on a phone and no new .aab was built.**
 
 ## Latest changes (2026-10-23, not yet released, not tested on a phone)
-- Game screen background is plain white (`SetWhiteBackground`); board and word list panel color `Palette.PanelGrey` #E9ECF1.
-- League: all rivals are simulated (no server). In debug/editor builds each simulated row shows a red BOT tag (`Row.IsBot`, `Debug.isDebugBuild`); release builds show nothing.
-- Economy rebalanced for Reveal Word only: cost 300 coins, max 5, free every 10 levels. Bundles: Starter 300c + 2 RW (Rs99), Player 900c + 6 RW (Rs299), Power 2000c + 14 RW (Rs599), Mega 4000c + 25 RW + Rainbow effect (Rs999), Ad-Free Plus 600c + 3 RW (Rs399). Daily reward: 100c, 150c, 1 RW, 200c, 250c, 1 RW, 400c + 1 RW.
-- Reveal Word icon is the magnifying glass (`pu_hint`), not the wand (`PowerUps.Art[4]`); game button, shop, bundles and daily reward all use it.
+- **No coins any more. The Hint is the only currency** (it finds a whole word; magnifying glass icon `pu_hint`, stored in `PlayerData.powers[4]`, helper `PowerUps.HintIndex`). All numbers are in `Assets/Scripts/Core/Economy.cs`.
+  - New player: 4 hints. First clear of a level: 1 hint, 2 on every 5th level, 3 on every 10th, +1 for 3 stars. Replays: 0. Daily Quest: 2 (+1 for 3 stars). Perfect Day: 2. Level-up: 0.
+  - Rewarded ad: +2 hints, 5 a day (shop row, "out of hints" popup, "x2 HINTS (AD)" on the result popup). Ad unit placement is still named `AdPlacement.Coins`.
+  - Daily reward: 1, 1, 2, 1, 1, 2, 3 hints. Collection steps 1/1/2/3, achievements 2-5, streaks 1/2/5 hints, league week 5/3/2/1 hints (ranks 1/2/3/top 10).
+  - IAP (same product ids): Starter 10 hints Rs99, Player 35 Rs299, Power 80 Rs599, Mega 150 Rs999 + Rainbow effect, Ad-Free Plus 10 hints Rs399. **Update the Play Console names/descriptions.**
+  - Old saves: coins (up to 20 hints) and the old power-ups are turned into hints in `SaveData.Fix`. Legacy field `coins` is kept only for this.
+  - UI: coin pill is now a hint pill (`HintPill`, `RewardHints`, `HoldHints`, `RefreshHintPills`), game HUD has pause (left), level pill (middle), Hint button with count (right). Out-of-hints popup offers ad or shop. Shop has no coin purchases.
+- Game screen background is plain white (`SetWhiteBackground`); panels `Palette.PanelGrey` #E9ECF1.
+- League: all rivals are simulated (no server). Debug/editor builds show a red BOT tag (`Row.IsBot`).
 - Shop bundle card: price button is its own button, the name strip stops before it.
-- `Docs/ICON_PROMPTS.md`: 3 big ChatGPT sheet prompts (24 + 23 + 20 icons) to regenerate the icons; owner has only 2-3 image generations per day. After the PNGs arrive: remove background, cut, rename in the listed order, force reimport. Python is no longer installed/working on this PC, so `Tools/*.py` cannot run until it is reinstalled.
-- Play Console: bundle descriptions must match the new contents above.
+- Icons: the owner generated 3 new sheets in ChatGPT (`Docs/ICON_PROMPTS.md`). They are NOT in the project yet. Sheet 1 came with a white background, sheets 2 and 3 have a checkerboard baked in as pixels (not real transparency). `Tools/cut_sheet.js` (Node, needs `cd Tools/node_tmp && npm install pngjs`) removes that background and cuts the items: `node Tools/cut_sheet.js <sheet.png> <names,comma,separated> [outDir] [--preview]`. Use `-` for an empty cell. Python is not working on this PC.
+  After cutting: force reimport (`AssetDatabase.ImportAsset("Assets/Resources/Art", ImportRecursive | ForceUpdate)`), check every screen for cut-off or wrong icons. The old coin sprites (`coin`, `coin_stack`, `coin_bag`, `pack_*`) are no longer used by code.
 
 ## To do (in order)
 1. Test on a phone (debug build): swipe colors, Reveal Word (use, buy at 0 left), pause, Shop, daily reward day 2/4/6/7, bundles still deliver, result popup, level 1 swipe tutorial, upgrade from an existing save (old power-ups -> coins).

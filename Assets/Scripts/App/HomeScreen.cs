@@ -130,7 +130,7 @@ namespace WordQuest
                     var st = UI.Icon(card.transform, s < d.stars[lv] ? "star" : "star_empty", 40, "S");
                     UI.Place(st.rectTransform, 0, 1, 56 + s * 42, -46, 40, 40);
                 }
-            if (lv % Economy.MilestoneEvery == 0)
+            if (lv % 5 == 0)
             {
                 var ch = UI.Icon(card.transform, "chest", 70, "Chest"); UI.Place(ch.rectTransform, 1, 1, -52, -54, 70, 70);
                 if (locked) ch.color = new Color(0.7f, 0.7f, 0.7f, 0.9f);
@@ -186,7 +186,7 @@ namespace WordQuest
                 var ic = UI.Icon(row.transform, st[i] ? "check" : "star_empty", 70, "I"); UI.Place(ic.rectTransform, 0, 0.5f, 62, 0, 70, 70);
                 var t = UI.Label(row.transform, names[i], 38, st[i] ? Palette.Green : Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(t.rectTransform, 0, 0.5f, 120, 0, 660, 52);
             }
-            var perfect = UI.Label(c, m.claimed ? "Perfect Day done!" : "Do all 4 for a Perfect Day: +100 coins", 36, m.claimed ? Palette.Green : Palette.InkSoft);
+            var perfect = UI.Label(c, m.claimed ? "Perfect Day done!" : "Do all 4 for a Perfect Day: +2 hints", 36, m.claimed ? Palette.Green : Palette.InkSoft);
             UI.Place(perfect.rectTransform, 0.5f, 0, 0, 120, 860, 50);
             var ok = UI.Pill(c, "btn_green", "OK", 360, 96, p.Close, 48); UI.Place((RectTransform)ok.transform, 0.5f, 0, 0, 14, 360, 96);
         }

@@ -80,7 +80,7 @@ namespace WordQuest
             // 3 free power-up milestone
             int toNext = LevelsToNextPowerUp(d);
             if (toNext > 0 && toNext <= 3)
-                all.Add(new Plan { When = now.Date.AddDays(1).AddHours(12), Priority = 6, Title = Title, Text = $"Complete {toNext} more level{(toNext == 1 ? "" : "s")} to earn a free power-up.", Tag = "milestone" });
+                all.Add(new Plan { When = now.Date.AddDays(1).AddHours(12), Priority = 6, Title = Title, Text = $"Complete {toNext} more level{(toNext == 1 ? "" : "s")} to earn bonus hints.", Tag = "milestone" });
 
             // 6 collection nearly complete
             for (int c = 0; c < WordBank.Count; c++)
@@ -112,8 +112,7 @@ namespace WordQuest
 
         static int LevelsToNextPowerUp(PlayerData d)
         {
-            int every = PowerUps.FreeEvery[(int)PowerUp.Word];
-            return every - (d.levelsCompleted % every);
+            return 5 - (d.levelsCompleted % 5);
         }
 
         // =============== Android glue ===============

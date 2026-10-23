@@ -61,10 +61,10 @@ namespace WordQuest
                 var pt = UI.Label(pb.Root, $"{val}/{a.Goal}", 22, Palette.Ink, TextAnchor.MiddleCenter, false); UI.Stretch(pt.rectTransform);
                 if (ready)
                 {
-                    var cb = UI.Pill(row, "btn_yellow", $"+{a.Coins}", 200, 84, () =>
+                    var cb = UI.Pill(row, "btn_yellow", $"+{a.Hints}", 200, 84, () =>
                     {
                         int c = Progress.ClaimAchievement(idx);
-                        if (c > 0) { Sfx.Play(Sfx.Kind.Level); Toast($"+{c} coins!", Palette.Yellow); ShowTab(Tab.Profile); }
+                        if (c > 0) { Sfx.Play(Sfx.Kind.Level); Toast($"+{c} hints!", Palette.Yellow); ShowTab(Tab.Profile); }
                     }, 40);
                     UI.Place((RectTransform)cb.transform, 1, 0.5f, -130, 0, 200, 84);
                 }

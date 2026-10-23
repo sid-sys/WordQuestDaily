@@ -64,7 +64,7 @@ namespace WordQuest
             var ic = UI.Icon(p.Content, "league", 240, "Shield"); UI.Place(ic.rectTransform, 0.5f, 1, 0, -170, 240, 240);
             var t = UI.Label(p.Content, w.Text, 56, Palette.Ink); UI.Place(t.rectTransform, 0.5f, 1, 0, -370, 820, 70);
             var r = UI.Label(p.Content, $"Last week you finished #{w.Rank}", 40, Palette.InkSoft); UI.Place(r.rectTransform, 0.5f, 1, 0, -440, 820, 50);
-            if (w.Coins > 0) { var c = UI.Label(p.Content, $"+{w.Coins} coins", 56, Palette.Orange); UI.Place(c.rectTransform, 0.5f, 1, 0, -520, 820, 70); }
+            if (w.Hints > 0) { var c = UI.Label(p.Content, $"+{w.Hints} hint{(w.Hints == 1 ? "" : "s")}", 56, Palette.Orange); UI.Place(c.rectTransform, 0.5f, 1, 0, -520, 820, 70); }
             var ok = UI.Pill(p.Content, "btn_green", "AWESOME", 420, 110, p.Close, 50); UI.Place((RectTransform)ok.transform, 0.5f, 0, 0, 40, 420, 110);
             Sfx.Play(w.NewTier > w.OldTier ? Sfx.Kind.Level : Sfx.Kind.Coin);
         }

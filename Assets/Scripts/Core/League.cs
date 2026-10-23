@@ -57,7 +57,7 @@ namespace WordQuest
 
         public static int MyRank => Standings().First(r => r.IsYou).Rank;
 
-        public class WeekResult { public int OldTier, NewTier, Rank, Coins; public string Text; }
+        public class WeekResult { public int OldTier, NewTier, Rank, Hints; public string Text; }
 
         /// <summary>Call on start. If a new week began, settle the old one and return the result (or null).</summary>
         public static WeekResult SettleIfNeeded()
@@ -76,11 +76,11 @@ namespace WordQuest
             {
                 if (rank <= 3 && tier < 4) tier++;
                 else if (rank > 15 && tier > 0) tier--;
-                res.Coins = rank == 1 ? 500 : rank == 2 ? 300 : rank == 3 ? 200 : rank <= 10 ? 100 : 0;
+                res.Hints = Economy.LeagueHints(rank);
             }
             res.NewTier = tier;
             res.Text = tier > res.OldTier ? "Promoted to " + Tiers[tier] + "!" : tier < res.OldTier ? "Moved down to " + Tiers[tier] : "You stay in " + Tiers[tier];
-            D.coins += res.Coins;
+            PowerUps.Add(D, PowerUp.Word, res.Hints);
             D.leagueTier = tier; D.leagueWeek = week; D.leaguePoints = 0;
             SaveSystem.Save();
             return res;

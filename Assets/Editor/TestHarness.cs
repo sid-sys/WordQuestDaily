@@ -114,7 +114,7 @@ namespace WordQuest.EditorTools
             if (findMystery) Swipe(grid, grid.Puzzle.Mystery);
             Advance(findMystery ? 330 : 10);
             if (!findMystery) { var m = typeof(GameApp).GetMethod("SkipMystery", BindingFlags.NonPublic | BindingFlags.Instance); m.Invoke(app, null); Advance(120); }
-            return "coins=" + SaveSystem.Data.coins + " level=" + SaveSystem.Data.playerLevel;
+            return "hints=" + SaveSystem.Data.powers[PowerUps.HintIndex] + " level=" + SaveSystem.Data.playerLevel;
         }
 
         public static void Click(string buttonName)

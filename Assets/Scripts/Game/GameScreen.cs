@@ -104,13 +104,11 @@ namespace WordQuest
             var root = g.Root;
             float rootH = safe.rect.height;
 
-            // --- HUD: pause top left, coins, level pill, Reveal Word top right ---
+            // --- HUD: pause top left, level pill in the middle, Hint top right ---
             MakePauseButton(root, 96, ShowPause);
             UI.Place((RectTransform)root.Find("Pause"), 0, 1, 70, -72, 96, 96);
-            var coins = CoinPill(root, false);
-            UI.Place(coins, 0, 1, 130 + 150, -72, 300, 92);
-            var lvPill = UI.Pill(root, "btn_blue", spec.IsDaily ? "Daily" : "Level " + spec.Index, 290, 84, () => { }, 46);
-            UI.Place((RectTransform)lvPill.transform, 0.5f, 1, 150, -72, 290, 84);
+            var lvPill = UI.Pill(root, "btn_blue", spec.IsDaily ? "Daily" : "Level " + spec.Index, 330, 84, () => { }, 46);
+            UI.Place((RectTransform)lvPill.transform, 0.5f, 1, 0, -72, 330, 84);
             lvPill.transition = Selectable.Transition.None;
             var cat = WordBank.Get(puzzle.CategoryIndex);
             BuildRevealButton(root);
@@ -404,7 +402,7 @@ namespace WordQuest
             Sfx.Play(Sfx.Kind.Complete);
             Fx.Confetti(fxLayer, 1000, canvasRt.rect.height / 2 + 40, 40);
             yield return new WaitForSecondsRealtime(0.45f);
-            HoldCoins(2.6f);
+            HoldHints(2.6f);
             var result = Progress.CompleteLevel(g.Spec, g.Puzzle, g.MysteryFound, g.PowerupsUsed);
             ShowResult(result);
         }
@@ -435,22 +433,30 @@ namespace WordQuest
             Fx.Punch(g.RevealButton, 0.25f, 0.35f);
         }
 
+        /// <summary>No hints left: watch an ad for hints, or open the shop.</summary>
         void ShowBuyPower(PowerUp pu)
         {
-            int i = (int)pu; var d = SaveSystem.Data;
-            var p = OpenPopup(PowerUps.Names[i].ToUpper(), 880, 820, true, "ribbon_green");
-            var ic = UI.Icon(p.Content, PowerUps.Art[i], 200, "Icon"); UI.Place(ic.rectTransform, 0.5f, 1, 0, -150, 200, 200);
-            var t = UI.Wrapped(p.Content, PowerUps.Info[i], 40, Palette.Ink, 720); UI.Place(t.rectTransform, 0.5f, 1, 0, -320, 720, 100);
-            bool full = PowerUps.IsFull(d, pu);
-            var own = UI.Label(p.Content, $"You have {PowerUps.Count(d, pu)}  (max {PowerUps.Max[i]})", 34, Palette.InkSoft); UI.Place(own.rectTransform, 0.5f, 1, 0, -400, 720, 44);
-            var buy = UI.Pill(p.Content, full ? "btn_grey" : d.coins >= PowerUps.Cost[i] ? "btn_green" : "btn_grey", full ? "FULL" : $"BUY  {PowerUps.Cost[i]}", 560, 110, () =>
+            Progress.RollAdDay();
+            var p = OpenPopup("OUT OF HINTS", 880, 820, true, "ribbon_green");
+            var ic = UI.Icon(p.Content, PowerUps.Art[(int)pu], 200, "Icon"); UI.Place(ic.rectTransform, 0.5f, 1, 0, -150, 200, 200);
+            var t = UI.Wrapped(p.Content, "A hint finds a whole word for you.", 40, Palette.Ink, 720); UI.Place(t.rectTransform, 0.5f, 1, 0, -320, 720, 100);
+            int left = Progress.AdClaimsLeft();
+            var watch = UI.Pill(p.Content, left > 0 ? "btn_yellow" : "btn_grey", left > 0 ? $"WATCH AD  +{Economy.AdHints}" : "NO ADS LEFT TODAY", 640, 110, null, left > 0 ? 46 : 34);
+            UI.Place((RectTransform)watch.transform, 0.5f, 0, 0, 150, 640, 110);
+            watch.onClick.RemoveAllListeners();
+            watch.onClick.AddListener(() =>
             {
-                if (PowerUps.IsFull(d, pu)) return;
-                if (!Progress.Spend(PowerUps.Cost[i])) { p.Close(); ShowShop(); return; }
-                PowerUps.Add(d, pu); Progress.Notify(); Sfx.Play(Sfx.Kind.Coin); RefreshPowerBar(); p.Close();
-            }, 50);
-            UI.Place((RectTransform)buy.transform, 0.5f, 0, 0, 150, 560, 110);
-            var shop = UI.Pill(p.Content, "btn_yellow", "OPEN SHOP", 560, 90, () => { p.Close(); ShowShop(null, RefreshPowerBar); }, 40);
+                if (Progress.AdClaimsLeft() <= 0) return;
+                Ads.ShowRewarded(AdPlacement.Coins, ok =>
+                {
+                    if (!ok) { Toast("No ad ready. Try again soon.", Palette.Red); return; }
+                    SaveSystem.Data.rewardedAdsToday++;
+                    Progress.AddHints(Economy.AdHints);
+                    Sfx.Play(Sfx.Kind.Coin); RefreshPowerBar(); RefreshHintPills(); p.Close();
+                    Toast($"+{Economy.AdHints} hints!", Palette.Yellow);
+                });
+            });
+            var shop = UI.Pill(p.Content, "btn_blue", "OPEN SHOP", 560, 90, () => { p.Close(); ShowShop(null, RefreshPowerBar); }, 40);
             UI.Place((RectTransform)shop.transform, 0.5f, 0, 0, 40, 560, 90);
         }
     }

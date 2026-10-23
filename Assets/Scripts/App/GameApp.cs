@@ -63,7 +63,7 @@ namespace WordQuest
             Progress.Changed += OnProgressChanged;
             Iap.Init();
             Iap.PricesChanged += () => { if (game == null && !HasPopup && tab == Tab.Shop) ShowTab(Tab.Shop); };
-            Iap.Delivered += id => { RefreshCoinPills(); Toast("Thank you! Purchase complete.", Palette.Green); if (tab == Tab.Home && game == null) ShowTab(Tab.Home); };
+            Iap.Delivered += id => { RefreshHintPills(); Toast("Thank you! Purchase complete.", Palette.Green); if (tab == Tab.Home && game == null) ShowTab(Tab.Home); };
 #if WQ_ADMOB
             AdMobService.Init();
 #endif
@@ -80,8 +80,8 @@ namespace WordQuest
         }
         void OnApplicationQuit() { SaveSystem.Save(); NotificationService.Schedule(); }
 
-        // Refresh the visible screen when coins etc. change (not while playing)
-        void OnProgressChanged() { RefreshCoinPills(); }
+        // Refresh the visible screen when hints etc. change (not while playing)
+        void OnProgressChanged() { RefreshHintPills(); }
 
         // =============== canvas ===============
         void BuildCanvas()
@@ -162,7 +162,7 @@ namespace WordQuest
             gameLayer.gameObject.SetActive(false);
             body.gameObject.SetActive(true); tabBar.gameObject.SetActive(true);
             foreach (Transform c in body) Destroy(c.gameObject);
-            coinDisplays.Clear();
+            hintDisplays.Clear();
             SetBackground(SaveSystem.Data.theme);
             switch (t)
             {
@@ -247,35 +247,35 @@ namespace WordQuest
         }
 
         // =============== shared HUD ===============
-        class CoinDisplay { public Text T; public int Shown; public Tween Tw; public RectTransform Pill; }
-        readonly List<CoinDisplay> coinDisplays = new List<CoinDisplay>();
+        class HintDisplay { public Text T; public int Shown; public Tween Tw; public RectTransform Pill; }
+        readonly List<HintDisplay> hintDisplays = new List<HintDisplay>();
 
         /// <summary>Counts every visible coin counter up or down to the real amount (DOTween).</summary>
-        float coinHoldUntil;
+        float hintHoldUntil;
 
         /// <summary>Keeps the coin counters still for a moment, so coins can fly in before the number changes.</summary>
-        public void HoldCoins(float seconds)
+        public void HoldHints(float seconds)
         {
-            coinHoldUntil = Mathf.Max(coinHoldUntil, Time.unscaledTime + seconds);
-            DOVirtual.DelayedCall(seconds + 0.05f, RefreshCoinPills).SetUpdate(true);
+            hintHoldUntil = Mathf.Max(hintHoldUntil, Time.unscaledTime + seconds);
+            DOVirtual.DelayedCall(seconds + 0.05f, RefreshHintPills).SetUpdate(true);
         }
 
         /// <summary>Gives coins: they fly from `from` to the coin counter, then the counter counts up.</summary>
-        public void RewardCoins(int amount, Vector2? from = null, Action done = null)
+        public void RewardHints(int amount, Vector2? from = null, Action done = null)
         {
-            int n = Mathf.Clamp(amount / 70, 5, 14);
+            int n = Mathf.Clamp(amount * 2, 3, 10);
             float dur = 0.95f + n * 0.05f;
-            HoldCoins(dur);
-            Progress.AddCoins(amount);
-            Fx.Fly(fxLayer, from ?? Vector2.zero, CoinTarget(), "coin", n, () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.35f, 0.4f), () => done?.Invoke(), 64f, 0.95f, 0.05f);
+            HoldHints(dur);
+            Progress.AddHints(amount);
+            Fx.Fly(fxLayer, from ?? Vector2.zero, HintTarget(), "pu_hint", n, () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.35f, 0.4f), () => done?.Invoke(), 64f, 0.95f, 0.05f);
         }
 
-        void RefreshCoinPills()
+        void RefreshHintPills()
         {
-            if (Time.unscaledTime < coinHoldUntil) return;
-            int to = SaveSystem.Data.coins;
-            coinDisplays.RemoveAll(c => c.T == null);
-            foreach (var c in coinDisplays)
+            if (Time.unscaledTime < hintHoldUntil) return;
+            int to = SaveSystem.Data.powers[PowerUps.HintIndex];
+            hintDisplays.RemoveAll(c => c.T == null);
+            foreach (var c in hintDisplays)
             {
                 if (c.Shown == to) continue;
                 int from = c.Shown; bool up = to > from;
@@ -291,19 +291,19 @@ namespace WordQuest
             }
         }
 
-        public RectTransform CoinPill(Transform parent, bool plus = true)
+        public RectTransform HintPill(Transform parent, bool plus = true)
         {
-            var root = UI.Node(parent, "CoinPill");
+            var root = UI.Node(parent, "HintPill");
             root.sizeDelta = new Vector2(320, 92);
             var pill = UI.Sliced(root, "chip", 76, "Body", true);
             var pr = pill.rectTransform; pr.anchorMin = new Vector2(0, 0.5f); pr.anchorMax = new Vector2(1, 0.5f); pr.offsetMin = new Vector2(46, -38); pr.offsetMax = new Vector2(0, 38);
-            var t = UI.Label(pill.transform, SaveSystem.Data.coins.ToString("N0"), 44, new Color32(0x6B, 0x2C, 0x0A, 255), TextAnchor.MiddleCenter);
+            var t = UI.Label(pill.transform, SaveSystem.Data.powers[PowerUps.HintIndex].ToString("N0"), 44, new Color32(0x6B, 0x2C, 0x0A, 255), TextAnchor.MiddleCenter);
             UI.Stretch(t.rectTransform, 62, 0, 24, 0);
             t.resizeTextForBestFit = true; t.resizeTextMinSize = 22; t.resizeTextMaxSize = 44;
             t.horizontalOverflow = HorizontalWrapMode.Wrap; t.verticalOverflow = VerticalWrapMode.Truncate;
-            var coin = UI.Icon(root, "coin", 96, "Coin");
+            var coin = UI.Icon(root, PowerUps.Art[PowerUps.HintIndex], 84, "Coin");
             UI.Place(coin.rectTransform, 0, 0.5f, 48, 0, 96, 96);
-            coinDisplays.Add(new CoinDisplay { T = t, Shown = SaveSystem.Data.coins, Pill = root });
+            hintDisplays.Add(new HintDisplay { T = t, Shown = SaveSystem.Data.powers[PowerUps.HintIndex], Pill = root });
             if (plus)
             {
                 var p = UI.GlyphButton(root, "g_plus", Palette.Green, 40, "Plus");
@@ -313,10 +313,10 @@ namespace WordQuest
             return root;
         }
 
-        public Vector2 CoinTarget()
+        public Vector2 HintTarget()
         {
             // the visible coin counter that is not inside a popup, in Fx layer coordinates
-            foreach (var c in coinDisplays)
+            foreach (var c in hintDisplays)
                 if (c.Pill != null && c.Pill.gameObject.activeInHierarchy && !c.Pill.IsChildOf(popupLayer))
                     return fxLayer.InverseTransformPoint(c.Pill.TransformPoint(new Vector3(-c.Pill.rect.width * 0.3f, 0, 0)));
             return new Vector2(canvasRt.rect.width / 2 - 260, canvasRt.rect.height / 2 - 130);
@@ -329,7 +329,7 @@ namespace WordQuest
             bar.anchorMin = new Vector2(0, 1); bar.anchorMax = new Vector2(1, 1); bar.pivot = new Vector2(0.5f, 1);
             bar.anchoredPosition = new Vector2(0, -12); bar.sizeDelta = new Vector2(0, 130);
 
-            var cp = CoinPill(bar);
+            var cp = HintPill(bar);
             UI.Place(cp, 0, 0.5f, 20 + 160, 0, 320, 92);
             if (avatar)
             {

@@ -2,40 +2,23 @@ using UnityEngine;
 
 namespace WordQuest
 {
-    public enum PowerUp { Shuffle, Hint, Letter, Finder, Word }
+    public enum PowerUp { Shuffle, Hint, Letter, Finder, Word }   // only Word is used: it is "the Hint" (finds a whole word)
 
     /// <summary>
-    /// Power-up numbers. Reveal Word is the only power-up and the only thing coins buy: an average level pays about 150 coins,
-    /// a Reveal Word costs 300, so a player earns about one every 2 levels (plus a free one every 10). Stock is capped at 5.
+    /// The game has no coins. The only currency is the Hint (it finds a whole word for the player).
+    /// Faucets: start 4, +1 per first-time level (+2 every 5th level, +3 every 10th, +1 more for 3 stars), daily quest, daily reward,
+    /// rewarded ads (2 per ad, 5 a day), missions, streaks, collections, achievements, weekly league. Sink: using a hint.
     /// </summary>
     public static class PowerUps
     {
-        public static readonly string[] Names = { "Shuffle", "Hint", "Reveal Letter", "Word Finder", "Reveal Word" };
-        public static readonly string[] Info =
-        {
-            "Moves the words you have not found",
-            "Shows the first letter of one word",
-            "Shows one letter inside a word",
-            "Marks where every word starts",
-            "Finds a whole word for you"
-        };
-        public static readonly int[] Cost = { 0, 0, 0, 0, 300 };      // only Reveal Word (index 4) is sold
-        public static readonly int[] Max = { 0, 0, 0, 0, 5 };
-        public static readonly int[] FreeEvery = { 0, 0, 0, 0, 10 };   // completed levels per free power-up (only Reveal Word exists)
-        public static readonly int[] UnlockLevel = { 3, 1, 7, 12, 18 };   // level whose tutorial unlocks each power-up
-        public static readonly string[] Art = { "pu_shuffle", "pu_hint", "pu_letter", "pu_finder", "pu_hint" };   // Reveal Word uses the magnifying glass
-        public static readonly PowerUp[] All = { PowerUp.Word };   // the only power-up left in the game
+        public const int HintIndex = 4;
+        public static readonly string[] Names = { "Shuffle", "Hint", "Reveal Letter", "Word Finder", "Hint" };
+        public static readonly string[] Info = { "", "", "", "", "Finds a whole word for you" };
+        public static readonly string[] Art = { "pu_shuffle", "pu_hint", "pu_letter", "pu_finder", "pu_hint" };   // the Hint is a magnifying glass
+        public static readonly PowerUp[] All = { PowerUp.Word };
 
         public static int Count(PlayerData d, PowerUp p) => d.powers[(int)p];
-        public static bool IsFull(PlayerData d, PowerUp p) => d.powers[(int)p] >= Max[(int)p];
-        /// <summary>Free and coin-bought power-ups stop at the inventory cap. Paid bundles (`paid`) may go over it.</summary>
-        public static bool Add(PlayerData d, PowerUp p, int n = 1, bool paid = false)
-        {
-            if (paid) { d.powers[(int)p] += n; return true; }
-            if (IsFull(d, p)) return false;
-            d.powers[(int)p] = Mathf.Min(Max[(int)p], d.powers[(int)p] + n);
-            return true;
-        }
+        public static void Add(PlayerData d, PowerUp p, int n = 1) { d.powers[(int)p] += n; }
         public static bool Use(PlayerData d, PowerUp p)
         {
             if (d.powers[(int)p] <= 0) return false;
@@ -44,13 +27,12 @@ namespace WordQuest
     }
 
     /// <summary>
-    /// Real-money bundles. Fixed contents (never "give me any amount of coins"), and the biggest one is only about 20 levels of income,
-    /// so nobody can buy their way through the game. Prices below are the targets for Play Console; the shop shows the store's real price.
+    /// Real-money hint packs. Fixed contents. Product ids stay the same as in Play Console (the names inside the console may be updated).
     /// </summary>
     public class Bundle
     {
         public string Id, Name, Ribbon, Art, Strip;
-        public int Coins; public int[] Powers;       // shuffle, hint, letter, finder, word
+        public int Hints;
         public int ExclusiveEffect = -1;             // unlocks a word effect
         public string TargetPrice;
     }
@@ -59,54 +41,46 @@ namespace WordQuest
     {
         public static readonly Bundle[] All =
         {
-            new Bundle { Id = "bundle_starter", Name = "Starter Pack", Ribbon = "SPECIAL OFFER", Art = "coin_stack", Strip = "btn_purple", Coins = 300, Powers = new[] { 0, 0, 0, 0, 2 }, TargetPrice = "Rs 99" },
-            new Bundle { Id = "bundle_player", Name = "Player Pack", Art = "pack_pile", Strip = "btn_yellow", Coins = 900, Powers = new[] { 0, 0, 0, 0, 6 }, TargetPrice = "Rs 299" },
-            new Bundle { Id = "bundle_power", Name = "Power Pack", Ribbon = "BEST VALUE", Art = "pack_pile", Strip = "btn_blue", Coins = 2000, Powers = new[] { 0, 0, 0, 0, 14 }, TargetPrice = "Rs 599" },
-            new Bundle { Id = "bundle_mega", Name = "Mega Pack", Art = "pack_heap", Strip = "btn_pink", Coins = 4000, Powers = new[] { 0, 0, 0, 0, 25 }, ExclusiveEffect = 4, TargetPrice = "Rs 999" },
+            new Bundle { Id = "bundle_starter", Name = "Starter Pack", Ribbon = "SPECIAL OFFER", Art = "pu_hint", Strip = "btn_purple", Hints = 10, TargetPrice = "Rs 99" },
+            new Bundle { Id = "bundle_player", Name = "Player Pack", Art = "pu_hint", Strip = "btn_yellow", Hints = 35, TargetPrice = "Rs 299" },
+            new Bundle { Id = "bundle_power", Name = "Power Pack", Ribbon = "BEST VALUE", Art = "pu_hint", Strip = "btn_blue", Hints = 80, TargetPrice = "Rs 599" },
+            new Bundle { Id = "bundle_mega", Name = "Mega Pack", Art = "pu_hint", Strip = "btn_pink", Hints = 150, ExclusiveEffect = 4, TargetPrice = "Rs 999" },
         };
-        public const string AdFreePlus = "remove_ads_plus";     // remove ads + a small starter kit (non-consumable, kit given once)
-        public static readonly Bundle AdFreeKit = new Bundle { Id = AdFreePlus, Name = "Ad-Free Plus", Coins = 600, Powers = new[] { 0, 0, 0, 0, 3 }, TargetPrice = "Rs 399" };
+        public const string AdFreePlus = "remove_ads_plus";     // remove ads + a small hint kit (non-consumable, kit given once)
+        public static readonly Bundle AdFreeKit = new Bundle { Id = AdFreePlus, Name = "Ad-Free Plus", Hints = 10, TargetPrice = "Rs 399" };
         public static Bundle Find(string id) { foreach (var b in All) if (b.Id == id) return b; return id == AdFreePlus ? AdFreeKit : null; }
     }
 
     public static class Economy
     {
-        // ---- coins for finishing a level ----
-        // Level coins = fixed reward x target win rate of that difficulty (rounded to clean numbers).
-        //   Beginner 100 x 90% = 90   Easy 150 x 80% = 120   Medium 225 x 70% = 160   Hard 350 x 55% = 195   Expert 500 x 40% = 200
-        public static readonly int[] FixedReward = { 100, 150, 225, 350, 500 };
-        public static readonly float[] TargetWinRate = { 0.90f, 0.80f, 0.70f, 0.55f, 0.40f };
-        public static int BaseCoins(Difficulty d)
-        {
-            int i = (int)d;
-            float raw = FixedReward[i] * TargetWinRate[i];
-            return Mathf.FloorToInt(raw / 5f + 0.5f) * 5;
-        }
-        public static int StarBonus(int stars) => stars >= 3 ? 40 : stars == 2 ? 20 : 0;
-        public const float ReplayFactor = 0.25f;     // replaying a finished level pays 25%, so it cannot be farmed
-        public const int MilestoneEvery = 5;         // every 5 new levels
-        public const int MilestoneCoins = 150;
+        // ---- hints for finishing a level ----
+        public const int StartHints = 4;
+        /// <summary>First clear only (replays pay nothing). 1 hint, 2 on every 5th level, 3 on every 10th, +1 for three stars.</summary>
+        public static int LevelHints(int levelsDone, int stars) => (levelsDone % 10 == 0 ? 3 : levelsDone % 5 == 0 ? 2 : 1) + (stars >= 3 ? 1 : 0);
+        public const int DailyQuestHints = 2;           // +1 for three stars
+        public const int PerfectDayHints = 2;
+        public static readonly int[] CollectionStepHints = { 1, 1, 2, 3 };
+        public static int LeagueHints(int rank) => rank == 1 ? 5 : rank == 2 ? 3 : rank == 3 ? 2 : rank <= 10 ? 1 : 0;
 
         // ---- XP ----
         public static int XpForLevel(int level) => 100 + 50 * (level - 1);     // XP needed to go from `level` to the next
         public static int XpForFinish(int stars) => 60 + 20 * stars;
-        public const int LevelUpCoins = 100;
 
         // ---- rewarded ads ----
-        public const int AdCoins = 100;
-        public const int AdCoinClaimsPerDay = 3;
+        public const int AdHints = 2;
+        public const int AdClaimsPerDay = 5;
 
         // ---- daily reward, 7 day cycle, shown once per calendar day ----
-        public struct Reward { public int Coins; public int Power; public int PowerCount; public string Label; }
+        public struct Reward { public int Hints; public string Label; }
         public static readonly Reward[] Daily =
         {
-            new Reward { Coins = 100, Power = -1, Label = "100 coins" },
-            new Reward { Coins = 150, Power = -1, Label = "150 coins" },
-            new Reward { Coins = 0, Power = (int)PowerUp.Word, PowerCount = 1, Label = "1 Reveal Word" },
-            new Reward { Coins = 200, Power = -1, Label = "200 coins" },
-            new Reward { Coins = 250, Power = -1, Label = "250 coins" },
-            new Reward { Coins = 0, Power = (int)PowerUp.Word, PowerCount = 1, Label = "1 Reveal Word" },
-            new Reward { Coins = 400, Power = (int)PowerUp.Word, PowerCount = 1, Label = "400 coins + Reveal Word" },
+            new Reward { Hints = 1, Label = "1 Hint" },
+            new Reward { Hints = 1, Label = "1 Hint" },
+            new Reward { Hints = 2, Label = "2 Hints" },
+            new Reward { Hints = 1, Label = "1 Hint" },
+            new Reward { Hints = 1, Label = "1 Hint" },
+            new Reward { Hints = 2, Label = "2 Hints" },
+            new Reward { Hints = 3, Label = "3 Hints" },
         };
 
         // ---- what unlocks at which player level ----

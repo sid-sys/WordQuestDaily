@@ -194,7 +194,7 @@ namespace WordQuest
                 var head = UI.Label(tile.transform, "DAY " + (i + 1), 28, Palette.Ink);
                 UI.Place(head.rectTransform, 0.5f, 1, 0, -44, 120, 36);
                 var r = Economy.Daily[i];
-                string art = r.Power >= 0 && r.Coins == 0 ? PowerUps.Art[r.Power] : i == 6 ? "chest" : r.Coins >= 250 ? "coin_bag" : r.Coins >= 150 ? "coin_stack" : "coin";
+                string art = i == 6 ? "chest" : PowerUps.Art[PowerUps.HintIndex];
                 var ic = UI.Icon(tile.transform, art, 108, "Icon");
                 UI.Place(ic.rectTransform, 0.5f, 1, 0, -146, 108, 108);
                 var lab = UI.Label(tile.transform, r.Label, 24, Palette.Ink);
@@ -209,11 +209,11 @@ namespace WordQuest
             claim.onClick.AddListener(() =>
             {
                 if (!Progress.CanClaimDailyReward()) { p.Close(); return; }
-                HoldCoins(1.8f);
+                HoldHints(1.8f);
                 var rw = Progress.ClaimDailyReward();
                 Sfx.Play(Sfx.Kind.Coin);
                 var from = Vector2.zero;
-                Fx.Fly(fxLayer, from, CoinTarget(), rw.Power >= 0 && rw.Coins == 0 ? PowerUps.Art[rw.Power] : "coin", rw.Coins > 0 ? 10 : 1, () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.2f, 0.5f), () => { RefreshCoinPills(); p.Close(); Toast("Reward collected: " + rw.Label, Palette.Yellow); });
+                Fx.Fly(fxLayer, from, HintTarget(), PowerUps.Art[PowerUps.HintIndex], rw.Hints * 2, () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.2f, 0.5f), () => { RefreshHintPills(); p.Close(); Toast("Reward collected: " + rw.Label, Palette.Yellow); });
                 claim.interactable = false;
             });
         }

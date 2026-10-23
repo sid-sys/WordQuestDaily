@@ -10,12 +10,12 @@ namespace WordQuest
         public LevelSpec Spec;
         public int Stars;
         public bool FirstClear, MysteryFound, NoPowerups;
-        public int Coins, Xp, BonusCoins;
+        public int Hints, Xp;
         public int NewWords;
         public string MysteryWord;
         public bool MysteryIsNew;
         public int LevelUps;
-        public List<string> Lines = new List<string>();     // extra reward lines: "+250 coins (5 level bonus)", "Free Shuffle" ...
+        public List<string> Lines = new List<string>();     // extra reward lines: "Streak Freeze saved your streak!" ...
         public int DailyScore;
         public int WordsFound;
     }
@@ -27,13 +27,8 @@ namespace WordQuest
         static PlayerData D => SaveSystem.Data;
         public static void Notify() { SaveSystem.Save(); Changed?.Invoke(); }
 
-        // ---------------- coins / xp ----------------
-        public static void AddCoins(int n) { D.coins += n; Notify(); }
-        public static bool Spend(int n)
-        {
-            if (D.coins < n) return false;
-            D.coins -= n; Notify(); return true;
-        }
+        // ---------------- hints / xp ----------------
+        public static void AddHints(int n) { PowerUps.Add(D, PowerUp.Word, n); Notify(); }
 
         /// <summary>Adds XP and returns how many player levels were gained.</summary>
         public static int AddXp(int n, List<string> lines = null)
@@ -44,8 +39,7 @@ namespace WordQuest
             {
                 D.xp -= Economy.XpForLevel(D.playerLevel);
                 D.playerLevel++; ups++;
-                D.coins += Economy.LevelUpCoins;
-                lines?.Add($"Level {D.playerLevel}! +{Economy.LevelUpCoins} coins");
+                lines?.Add($"Level {D.playerLevel}!");
                 UnlockByLevel(lines);
             }
             return ups;
@@ -89,16 +83,14 @@ namespace WordQuest
             if (!daily)
             {
                 r.FirstClear = D.stars[spec.Index] == 0;
-                int coins = Economy.BaseCoins(spec.Diff) + Economy.StarBonus(r.Stars);
-                if (!r.FirstClear) coins = Mathf.RoundToInt(coins * Economy.ReplayFactor);
-                r.Coins = coins;
-                D.coins += coins;
                 if (r.Stars > D.stars[spec.Index]) D.stars[spec.Index] = r.Stars;
                 if (r.FirstClear)
                 {
                     D.levelsCompleted++;
                     if (spec.Index >= D.highestUnlocked && spec.Index < Levels.Total) D.highestUnlocked = spec.Index + 1;
-                    GrantMilestones(r);
+                    r.Hints = Economy.LevelHints(D.levelsCompleted, r.Stars);
+                    PowerUps.Add(D, PowerUp.Word, r.Hints);
+                    if (D.levelsCompleted % 5 == 0) r.Lines.Add($"{D.levelsCompleted} levels done: bonus hints!");
                 }
                 r.Xp = Economy.XpForFinish(r.Stars) / (r.FirstClear ? 1 : 2);
                 D.leaguePoints += 15;
@@ -114,8 +106,8 @@ namespace WordQuest
                     D.dailyQuestDoneDate = Clock.TodayKey;
                     D.dailyQuestScore = r.DailyScore;
                     D.dailyDone++;
-                    r.Coins = 50 + (r.Stars == 3 ? 100 : r.Stars == 2 ? 25 : 0);
-                    D.coins += r.Coins;
+                    r.Hints = Economy.DailyQuestHints + (r.Stars == 3 ? 1 : 0);
+                    PowerUps.Add(D, PowerUp.Word, r.Hints);
                     r.Xp = 100 + 25 * r.Stars;
                     D.leaguePoints += r.DailyScore / 10;
                     D.missions.playedDaily = true;
@@ -123,7 +115,7 @@ namespace WordQuest
                 }
                 else
                 {
-                    r.Coins = 0; r.Xp = 10;
+                    r.Hints = 0; r.Xp = 10;
                     if (r.DailyScore > D.dailyQuestScore) { D.leaguePoints += (r.DailyScore - D.dailyQuestScore) / 10; D.dailyQuestScore = r.DailyScore; }
                 }
             }
@@ -133,22 +125,6 @@ namespace WordQuest
             CheckMissions(r);
             Notify();
             return r;
-        }
-
-        static void GrantMilestones(LevelResult r)
-        {
-            int n = D.levelsCompleted;
-            if (n % Economy.MilestoneEvery == 0)
-            {
-                D.coins += Economy.MilestoneCoins; r.BonusCoins += Economy.MilestoneCoins;
-                r.Lines.Add($"+{Economy.MilestoneCoins} coins ({n} levels done)");
-            }
-            const int w = (int)PowerUp.Word;
-            if (n % PowerUps.FreeEvery[w] == 0)
-            {
-                if (PowerUps.Add(D, PowerUp.Word)) r.Lines.Add("Free " + PowerUps.Names[w]);
-                else { D.coins += PowerUps.Cost[w] / 2; r.BonusCoins += PowerUps.Cost[w] / 2; r.Lines.Add($"{PowerUps.Names[w]} is full: +{PowerUps.Cost[w] / 2} coins"); }
-            }
         }
 
         // ---------------- collection ----------------
@@ -171,7 +147,7 @@ namespace WordQuest
         public static int CollectionsComplete() { int n = 0; for (int i = 0; i < WordBank.Count; i++) if (CollectionComplete(i)) n++; return n; }
 
         static readonly float[] CollectionSteps = { 0.25f, 0.5f, 0.75f, 1f };
-        static readonly int[] CollectionStepCoins = { 250, 250, 500, 1000 };
+        
         /// <summary>Returns the step (0-3) that can be claimed for this category, or -1.</summary>
         public static int ClaimableStep(int cat)
         {
@@ -184,15 +160,15 @@ namespace WordQuest
             int s = ClaimableStep(cat);
             if (s < 0) return 0;
             CatEntry(cat).claimedStep = s + 1;
-            D.coins += CollectionStepCoins[s];
+            PowerUps.Add(D, PowerUp.Word, Economy.CollectionStepHints[s]);
             Notify();
-            return CollectionStepCoins[s];
+            return Economy.CollectionStepHints[s];
         }
         public static string StepLabel(int cat)
         {
             var e = CatEntry(cat);
             if (e.claimedStep >= 4) return "Complete";
-            return $"{Mathf.RoundToInt(CollectionSteps[e.claimedStep] * 100)}%: {CollectionStepCoins[e.claimedStep]} coins";
+            return $"{Mathf.RoundToInt(CollectionSteps[e.claimedStep] * 100)}%: {Economy.CollectionStepHints[e.claimedStep]} hint{(Economy.CollectionStepHints[e.claimedStep] == 1 ? "" : "s")}";
         }
 
         // ---------------- daily reward (once a day, resets at 00:00) ----------------
@@ -207,8 +183,7 @@ namespace WordQuest
         {
             int day = DailyRewardDayIndex();
             var r = Economy.Daily[day];
-            D.coins += r.Coins;
-            if (r.Power >= 0) if (!PowerUps.Add(D, (PowerUp)r.Power, r.PowerCount)) D.coins += PowerUps.Cost[r.Power] / 2;
+            PowerUps.Add(D, PowerUp.Word, r.Hints);
             D.dailyRewardDay = (day + 1) % 7;
             D.lastDailyRewardClaimDate = Clock.TodayKey;
             Notify();
@@ -217,7 +192,7 @@ namespace WordQuest
 
         // ---------------- streak ----------------
         public static readonly int[] StreakSteps = { 3, 7, 14, 30, 60, 100 };
-        public static readonly string[] StreakRewards = { "100 coins", "1 Hint", "Silver frame", "Dragon avatar", "500 coins", "Diamond frame" };
+        public static readonly string[] StreakRewards = { "1 Hint", "2 Hints", "Silver frame", "Dragon avatar", "5 Hints", "Diamond frame" };
 
         public static int EffectiveStreak()
         {
@@ -245,11 +220,11 @@ namespace WordQuest
                     D.streakClaimed = StreakSteps[i];
                     switch (i)
                     {
-                        case 0: D.coins += 100; break;
-                        case 1: PowerUps.Add(D, PowerUp.Word); break;
+                        case 0: PowerUps.Add(D, PowerUp.Word, 1); break;
+                        case 1: PowerUps.Add(D, PowerUp.Word, 2); break;
                         case 2: D.ringOwned[1] = true; break;
                         case 3: D.avatarOwned[9] = true; break;
-                        case 4: D.coins += 500; break;
+                        case 4: PowerUps.Add(D, PowerUp.Word, 5); break;
                         case 5: D.ringOwned[3] = true; break;
                     }
                     r.Lines.Add($"{StreakSteps[i]} day streak: {StreakRewards[i]}");
@@ -273,32 +248,32 @@ namespace WordQuest
             if (MissionsDone() == 4 && !D.missions.claimed)
             {
                 D.missions.claimed = true;
-                D.coins += 100; r.BonusCoins += 100;
-                r.Lines.Add("Perfect Day! +100 coins");
+                PowerUps.Add(D, PowerUp.Word, Economy.PerfectDayHints);
+                r.Lines.Add($"Perfect Day! +{Economy.PerfectDayHints} hints");
                 r.LevelUps += AddXp(50, r.Lines);
             }
         }
 
         // ---------------- achievements ----------------
-        public class Achievement { public string Name, Desc, Art; public int Goal; public int Coins; public Func<PlayerData, int> Value; }
+        public class Achievement { public string Name, Desc, Art; public int Goal; public int Hints; public Func<PlayerData, int> Value; }
         public static readonly Achievement[] Achievements =
         {
-            new Achievement { Name = "Word Hunter", Desc = "Find 1,000 words", Art = "medal_hunter", Goal = 1000, Coins = 500, Value = d => d.wordsFound },
-            new Achievement { Name = "Streak Master", Desc = "Reach a 30 day streak", Art = "medal_streak", Goal = 30, Coins = 500, Value = d => d.bestStreak },
-            new Achievement { Name = "Mystery Hunter", Desc = "Find 25 mystery words", Art = "medal_speed", Goal = 25, Coins = 300, Value = d => d.mysteryFound },
-            new Achievement { Name = "Explorer", Desc = "Discover 500 different words", Art = "medal_explorer", Goal = 500, Coins = 500, Value = d => d.collection.Sum(c => c.words.Count) },
-            new Achievement { Name = "Perfect Week", Desc = "Finish 7 daily quests", Art = "medal_week", Goal = 7, Coins = 300, Value = d => d.dailyDone },
-            new Achievement { Name = "Word Master", Desc = "Finish level 100", Art = "medal_master", Goal = 100, Coins = 1000, Value = d => Mathf.Max(0, d.highestUnlocked - 1) },
-            new Achievement { Name = "Collector", Desc = "Complete a collection", Art = "medal_collector", Goal = 1, Coins = 500, Value = d => CollectionsComplete() },
-            new Achievement { Name = "Star Champion", Desc = "Earn 100 stars", Art = "medal_champion", Goal = 100, Coins = 500, Value = d => d.stars.Sum() },
+            new Achievement { Name = "Word Hunter", Desc = "Find 1,000 words", Art = "medal_hunter", Goal = 1000, Hints = 3, Value = d => d.wordsFound },
+            new Achievement { Name = "Streak Master", Desc = "Reach a 30 day streak", Art = "medal_streak", Goal = 30, Hints = 3, Value = d => d.bestStreak },
+            new Achievement { Name = "Mystery Hunter", Desc = "Find 25 mystery words", Art = "medal_speed", Goal = 25, Hints = 2, Value = d => d.mysteryFound },
+            new Achievement { Name = "Explorer", Desc = "Discover 500 different words", Art = "medal_explorer", Goal = 500, Hints = 3, Value = d => d.collection.Sum(c => c.words.Count) },
+            new Achievement { Name = "Perfect Week", Desc = "Finish 7 daily quests", Art = "medal_week", Goal = 7, Hints = 2, Value = d => d.dailyDone },
+            new Achievement { Name = "Word Master", Desc = "Finish level 100", Art = "medal_master", Goal = 100, Hints = 5, Value = d => Mathf.Max(0, d.highestUnlocked - 1) },
+            new Achievement { Name = "Collector", Desc = "Complete a collection", Art = "medal_collector", Goal = 1, Hints = 3, Value = d => CollectionsComplete() },
+            new Achievement { Name = "Star Champion", Desc = "Earn 100 stars", Art = "medal_champion", Goal = 100, Hints = 3, Value = d => d.stars.Sum() },
         };
         public static bool AchievementReady(int i) => !D.achievementClaimed[i] && Achievements[i].Value(D) >= Achievements[i].Goal;
         public static int ReadyAchievements() { int n = 0; for (int i = 0; i < Achievements.Length; i++) if (AchievementReady(i)) n++; return n; }
         public static int ClaimAchievement(int i)
         {
             if (!AchievementReady(i)) return 0;
-            D.achievementClaimed[i] = true; D.coins += Achievements[i].Coins; Notify();
-            return Achievements[i].Coins;
+            D.achievementClaimed[i] = true; PowerUps.Add(D, PowerUp.Word, Achievements[i].Hints); Notify();
+            return Achievements[i].Hints;
         }
 
         // ---------------- bundles ----------------
@@ -307,8 +282,7 @@ namespace WordQuest
         {
             if (b == null) return "";
             if (firstTimeOnly) { if (D.adFreeKitClaimed) return ""; D.adFreeKitClaimed = true; }
-            D.coins += b.Coins;
-            for (int i = 0; i < 5; i++) if (b.Powers[i] > 0) PowerUps.Add(D, (PowerUp)i, b.Powers[i], true);
+            PowerUps.Add(D, PowerUp.Word, b.Hints);
             if (b.ExclusiveEffect >= 0) D.effectOwned[b.ExclusiveEffect] = true;
             Notify();
             return b.Name;
@@ -317,8 +291,8 @@ namespace WordQuest
         // ---------------- rewarded ads ----------------
         public static void RollAdDay()
         {
-            if (D.adsDate != Clock.TodayKey) { D.adsDate = Clock.TodayKey; D.rewardedCoinAdsToday = 0; }
+            if (D.adsDate != Clock.TodayKey) { D.adsDate = Clock.TodayKey; D.rewardedAdsToday = 0; }
         }
-        public static int AdCoinClaimsLeft() { RollAdDay(); return Mathf.Max(0, Economy.AdCoinClaimsPerDay - D.rewardedCoinAdsToday); }
+        public static int AdClaimsLeft() { RollAdDay(); return Mathf.Max(0, Economy.AdClaimsPerDay - D.rewardedAdsToday); }
     }
 }

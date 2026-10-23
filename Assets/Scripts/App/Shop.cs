@@ -5,14 +5,14 @@ using UnityEngine.UI;
 
 namespace WordQuest
 {
-    /// <summary>The shop: bundle cards (fixed contents), Remove Ads, free coins for an ad, power-ups for coins. Used as a tab and as a popup.</summary>
+    /// <summary>The shop: bundle cards (fixed contents), Remove Ads, free hints for an ad. Used as a tab and as a popup.</summary>
     public partial class GameApp
     {
         // =============== entry points ===============
         public void ShowShop(PowerUp? focus = null, Action onClose = null)
         {
             var p = OpenPopup("SHOP", 1000, 1560, true, "ribbon_green", onClose);
-            var coins = CoinPill(p.Card, false);
+            var coins = HintPill(p.Card, false);
             UI.Place(coins, 0.5f, 1, 0, -184, 320, 92);
             RectTransform content;
             var sr = Scroll(p.Content, out content);
@@ -26,7 +26,7 @@ namespace WordQuest
             title.GetComponent<Outline>().effectColor = new Color32(0x12, 0x4A, 0xA8, 255); title.GetComponent<Outline>().effectDistance = new Vector2(5, -5);
             title.rectTransform.anchorMin = title.rectTransform.anchorMax = new Vector2(0.5f, 1); title.rectTransform.pivot = new Vector2(0.5f, 1);
             title.rectTransform.anchoredPosition = new Vector2(120, -22); title.rectTransform.sizeDelta = new Vector2(500, 120);
-            var cp = CoinPill(b);
+            var cp = HintPill(b);
             cp.anchorMin = cp.anchorMax = new Vector2(0, 1); cp.pivot = new Vector2(0.5f, 1); cp.anchoredPosition = new Vector2(20 + 160, -30); cp.sizeDelta = new Vector2(320, 92);
             var sg = UI.GlyphButton(b, "g_gear", new Color32(0xE0, 0x62, 0x4A, 255), 90, "Gear", 0.6f);
             UI.Place(sg.rectTransform, 1, 1, -70, -76, 90, 90); UI.Click(sg, ShowSettings);
@@ -61,57 +61,26 @@ namespace WordQuest
                 UI.Place((RectTransform)b.transform, 1, 0.5f, -160, 0, 250, 96);
             }
 
-            // ---- free coins for a video ----
+            // ---- free hints for a video ----
             {
                 var row = ListRow(content, ref y, 190, w);
                 var ic = UI.Icon(row, "gift", 130, "Gift"); UI.Place(ic.rectTransform, 0, 0.5f, 100, 0, 130, 130);
-                var t = UI.Label(row, $"Free {Economy.AdCoins} coins", 46, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(t.rectTransform, 0, 0.5f, 190, 30, 420, 56);
-                var s = UI.Label(row, $"{Progress.AdCoinClaimsLeft()} left today", 30, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(s.rectTransform, 0, 0.5f, 190, -26, 420, 42);
-                bool ok = Progress.AdCoinClaimsLeft() > 0;
+                var t = UI.Label(row, $"Free {Economy.AdHints} hints", 46, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(t.rectTransform, 0, 0.5f, 190, 30, 420, 56);
+                var s = UI.Label(row, $"{Progress.AdClaimsLeft()} left today", 30, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(s.rectTransform, 0, 0.5f, 190, -26, 420, 42);
+                bool ok = Progress.AdClaimsLeft() > 0;
                 var b = UI.Pill(row, ok ? "btn_yellow" : "btn_grey", ok ? "WATCH" : "DONE", 250, 96, () =>
                 {
-                    if (Progress.AdCoinClaimsLeft() <= 0) return;
+                    if (Progress.AdClaimsLeft() <= 0) return;
                     Ads.ShowRewarded(AdPlacement.Coins, done =>
                     {
                         if (!done) { Toast("No ad ready. Try again soon.", Palette.Red); return; }
-                        SaveSystem.Data.rewardedCoinAdsToday++;
-                        RewardCoins(Economy.AdCoins);
+                        SaveSystem.Data.rewardedAdsToday++;
+                        RewardHints(Economy.AdHints);
                         Sfx.Play(Sfx.Kind.Coin);
                         rebuild();
                     });
                 }, 40);
                 UI.Place((RectTransform)b.transform, 1, 0.5f, -160, 0, 250, 96);
-            }
-
-            // ---- power-ups for coins ----
-            var head = UI.Label(content, "REVEAL WORD", 52, Color.white, TextAnchor.MiddleCenter, true);
-            head.GetComponent<Outline>().effectColor = new Color32(0x12, 0x4A, 0xA8, 255);
-            UI.Place(head.rectTransform, 0.5f, 1, 0, -(y + 46), 800, 70); y += 96;
-            foreach (var pu in PowerUps.All)
-            {
-                var pw = pu; int i = (int)pu;
-                var row = ListRow(content, ref y, 190, w);
-                var ic = UI.Icon(row, PowerUps.Art[i], 130, "Icon"); UI.Place(ic.rectTransform, 0, 0.5f, 100, 0, 130, 130);
-                var n = UI.Label(row, $"{PowerUps.Names[i]}  x{PowerUps.Count(d, pu)}", 42, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(n.rectTransform, 0, 0.5f, 185, 40, 430, 52);
-                var ds = UI.Label(row, PowerUps.Info[i], 26, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(ds.rectTransform, 0, 0.5f, 185, -4, 430, 38);
-                var mx = UI.Label(row, $"Max {PowerUps.Max[i]}", 24, Palette.InkSoft, TextAnchor.MiddleLeft); UI.PlaceL(mx.rectTransform, 0, 0.5f, 185, -42, 430, 34);
-                bool full = PowerUps.IsFull(d, pu), afford = d.coins >= PowerUps.Cost[i];
-                var bt = UI.Pill(row, full ? "btn_grey" : afford ? "btn_green" : "btn_grey", full ? "FULL" : "", 250, 100, () =>
-                {
-                    if (PowerUps.IsFull(d, pw)) { Toast("You have the maximum", Palette.Yellow); return; }
-                    if (!Progress.Spend(PowerUps.Cost[(int)pw])) { Toast("Not enough coins. Play levels or watch an ad!", Palette.Red); Sfx.Play(Sfx.Kind.Error); return; }
-                    PowerUps.Add(d, pw); Progress.Notify(); Sfx.Play(Sfx.Kind.Coin);
-                    rebuild();
-                }, 44);
-                UI.Place((RectTransform)bt.transform, 1, 0.5f, -160, 0, 250, 100);
-                if (!full)
-                {
-                    var c = UI.Icon(bt.transform, "coin", 60, "C"); UI.Place(c.rectTransform, 0, 0.5f, 56, 3, 60, 60);
-                    var pr = UI.Label(bt.transform, PowerUps.Cost[i].ToString(), 42, Color.white, TextAnchor.MiddleCenter, true);
-                    pr.GetComponent<Outline>().effectColor = UI.PillOutline("btn_green");
-                    UI.Place(pr.rectTransform, 0.5f, 0.5f, 28, 3, 130, 60);
-                    UI.ButtonLabel(bt).gameObject.SetActive(false);
-                }
             }
 
             var restore = UI.Pill(content, "btn_blue", "RESTORE PURCHASES", 520, 80, () => Iap.Restore(msg => Toast(msg, Palette.Yellow)), 32);
@@ -126,29 +95,20 @@ namespace WordQuest
             var row = RowAt(content, ref y, h + 22, w);
             var card = UI.Sliced(row, frame, h, "Bundle_" + bd.Id, false);
             UI.Place(card.rectTransform, 0.5f, 1, 0, -h / 2 - 8, w, h);
-            // coin pile + amount
-            var pile = UI.Icon(card.transform, bd.Art, 170, "Pile"); UI.Place(pile.rectTransform, 0, 1, 130, -104, 200, 170);
-            var amount = UI.Label(card.transform, bd.Coins.ToString("N0"), 58, Color.white, TextAnchor.MiddleCenter, true);
+            // hint icon + amount on the left
+            var pile = UI.Icon(card.transform, "pu_hint", 170, "Pile"); UI.Place(pile.rectTransform, 0, 1, 130, -104, 200, 170);
+            var amount = UI.Label(card.transform, "x" + bd.Hints, 58, Color.white, TextAnchor.MiddleCenter, true);
             amount.GetComponent<Outline>().effectColor = new Color32(0x4A, 0x24, 0x08, 255);
             UI.Place(amount.rectTransform, 0, 1, 130, -216, 250, 66);
-            // power-ups inset
+            // what you get, in the inset
             var inset = UI.Sliced(card.transform, "card_inset", 190, "Inset");
             UI.Place(inset.rectTransform, 1, 1, -(w - 270 - 24) / 2 - 24, -128, w - 270 - 24, 208);
-            int shown = 0; for (int i = 0; i < 5; i++) if (bd.Powers[i] > 0) shown++;
-            float cell = (w - 270 - 24 - 20) / Mathf.Max(3, shown), x0 = -(shown - 1) * cell / 2f;
-            int k = 0;
-            for (int i = 0; i < 5; i++)
-            {
-                if (bd.Powers[i] <= 0) continue;
-                var ic = UI.Icon(inset.transform, PowerUps.Art[i], 92, "P" + i); UI.Place(ic.rectTransform, 0.5f, 0.5f, x0 + k * cell, 36, 92, 92);
-                var cnt = UI.Label(inset.transform, "x" + bd.Powers[i], 38, new Color32(0x6B, 0x3A, 0x0E, 255), TextAnchor.MiddleCenter);
-                UI.Place(cnt.rectTransform, 0.5f, 0.5f, x0 + k * cell, -34, 110, 44);
-                k++;
-            }
+            var big = UI.Label(inset.transform, bd.Hints + " Hints", 76, new Color32(0x6B, 0x3A, 0x0E, 255), TextAnchor.MiddleCenter);
+            UI.Place(big.rectTransform, 0.5f, 0.5f, 0, bd.ExclusiveEffect >= 0 ? 22 : 0, 560, 100);
             if (bd.ExclusiveEffect >= 0)
             {
-                var ex = UI.Label(inset.transform, "+ exclusive " + Economy.EffectNames[bd.ExclusiveEffect] + " effect", 24, new Color32(0x7A, 0x2E, 0xC0, 255), TextAnchor.MiddleCenter);
-                UI.Place(ex.rectTransform, 0.5f, 0.5f, 0, -80, 420, 30);
+                var ex = UI.Label(inset.transform, "+ exclusive " + Economy.EffectNames[bd.ExclusiveEffect] + " effect", 26, new Color32(0x7A, 0x2E, 0xC0, 255), TextAnchor.MiddleCenter);
+                UI.Place(ex.rectTransform, 0.5f, 0.5f, 0, -56, 520, 34);
             }
             // footer: name + price
             var strip = UI.Sliced(card.transform, bd.Strip, 92, "Strip");
@@ -172,11 +132,11 @@ namespace WordQuest
         // =============== a purchase just arrived ===============
         public void BundleDelivered(Bundle b, bool firstKitOnly)
         {
-            HoldCoins(1.8f);
+            HoldHints(1.8f);
             Progress.GrantBundle(b, firstKitOnly);
             Sfx.Play(Sfx.Kind.Level);
-            Fx.Fly(fxLayer, Vector2.zero, CoinTarget(), "coin", 12, () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.3f, 0.4f), null, 64f, 0.95f, 0.05f);
-            if (b.Coins > 0) Fx.FloatText(fxLayer, new Vector2(0, 120), "+" + b.Coins.ToString("N0") + " coins", Palette.Yellow, 60);
+            Fx.Fly(fxLayer, Vector2.zero, HintTarget(), "pu_hint", 8, () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.3f, 0.4f), null, 64f, 0.95f, 0.05f);
+            if (b.Hints > 0) Fx.FloatText(fxLayer, new Vector2(0, 120), "+" + b.Hints + " hints", Palette.Yellow, 60);
         }
 
         // =============== Remove Ads (image 4 style) ===============
@@ -208,18 +168,9 @@ namespace WordQuest
             var tg = UI.Label(tag.transform, "BEST VALUE", 26, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(tg.rectTransform, 0, 2, 0, 0); tg.GetComponent<Outline>().effectColor = UI.PillOutline("btn_red");
             var b2 = UI.Icon(right.transform, "noads_badge", 130, "B2"); UI.Place(b2.rectTransform, 0, 1, 100, -120, 130, 130);
             var plus = UI.Label(right.transform, "+", 70, new Color32(0x6B, 0x3A, 0x0E, 255)); UI.Place(plus.rectTransform, 0.5f, 1, -6, -120, 60, 70);
-            var cn = UI.Icon(right.transform, "coin_stack", 120, "Coins"); UI.Place(cn.rectTransform, 1, 1, -100, -120, 120, 120);
+            var cn = UI.Icon(right.transform, "pu_hint", 120, "Coins"); UI.Place(cn.rectTransform, 1, 1, -100, -120, 120, 120);
             var kit = Bundles.AdFreeKit;
-            var ct = UI.Label(right.transform, kit.Coins.ToString("N0") + " coins", 38, new Color32(0x6B, 0x3A, 0x0E, 255)); UI.Place(ct.rectTransform, 0.5f, 1, 0, -230, 440, 50);
-            int shown = 0; for (int i = 0; i < 5; i++) if (kit.Powers[i] > 0) shown++;
-            float cell = 100f, x0 = -(shown - 1) * cell / 2f; int k = 0;
-            for (int i = 0; i < 5; i++)
-            {
-                if (kit.Powers[i] <= 0) continue;
-                var ic = UI.Icon(right.transform, PowerUps.Art[i], 70, "P" + i); UI.Place(ic.rectTransform, 0.5f, 1, x0 + k * cell, -312, 70, 70);
-                var cc = UI.Label(right.transform, "x" + kit.Powers[i], 30, new Color32(0x6B, 0x3A, 0x0E, 255)); UI.Place(cc.rectTransform, 0.5f, 1, x0 + k * cell, -366, 90, 36);
-                k++;
-            }
+            var ct = UI.Label(right.transform, kit.Hints + " hints", 38, new Color32(0x6B, 0x3A, 0x0E, 255)); UI.Place(ct.rectTransform, 0.5f, 1, 0, -230, 440, 50);
             var rb = UI.Pill(right.transform, "btn_green", Iap.Price(Bundles.AdFreePlus), 360, 100, () => { Iap.Buy(Bundles.AdFreePlus, m => { if (m != null) Toast(m, Palette.Red); }); p.Close(); }, 44);
             UI.Place((RectTransform)rb.transform, 0.5f, 0, 0, 56, 360, 100);
             var foot = UI.Label(panel.transform, "One-time purchase. Restore it any time from the Shop.", 26, Color.white, TextAnchor.MiddleCenter, true);

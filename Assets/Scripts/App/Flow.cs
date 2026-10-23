@@ -24,7 +24,7 @@ namespace WordQuest
         {
             var spec = r.Spec; var d = SaveSystem.Data;
             var cat = WordBank.Get(game.Puzzle.CategoryIndex);
-            bool canDouble = r.Coins > 0 && Ads.IsReady(AdPlacement.DoubleReward);
+            bool canDouble = r.Hints > 0 && Ads.IsReady(AdPlacement.DoubleReward);
 
             // vertical plan (all sizes known up front so nothing can overlap)
             const float starsH = 200, wordsH = 60, mysteryH = 56, rewardH = 190, gap = 26, collH = 92;
@@ -51,14 +51,14 @@ namespace WordQuest
             string myst = r.MysteryFound ? $"Mystery: {r.MysteryWord}" : "Mystery word not found";
             var mt = UI.Label(c, myst, 34, r.MysteryFound ? Palette.Purple : Palette.InkSoft); UI.Place(mt.rectTransform, 0.5f, 1, 0, -(y + mysteryH / 2), 800, 44); y += mysteryH;
 
-            // coins + xp
+            // hints + xp
             var row = UI.Sliced(c, "card_a", rewardH, "Rewards"); UI.Place(row.rectTransform, 0.5f, 1, 0, -(y + rewardH / 2), 820, rewardH);
-            var ci = UI.Icon(row.transform, "coin", 92, "C"); UI.Place(ci.rectTransform, 0, 0.5f, 100, 26, 92, 92);
+            var ci = UI.Icon(row.transform, PowerUps.Art[PowerUps.HintIndex], 92, "C"); UI.Place(ci.rectTransform, 0, 0.5f, 100, 26, 92, 92);
             var coinT = UI.Label(row.transform, "+0", 60, Palette.Orange, TextAnchor.MiddleLeft, false); UI.PlaceL(coinT.rectTransform, 0, 0.5f, 168, 26, 240, 80);
             var xi = UI.Icon(row.transform, "xp", 80, "X"); UI.Place(xi.rectTransform, 0.5f, 0.5f, 60, 26, 80, 80);
             var xpT = UI.Label(row.transform, "+" + r.Xp + " XP", 44, Palette.Blue, TextAnchor.MiddleLeft, false); UI.PlaceL(xpT.rectTransform, 0.5f, 0.5f, 118, 26, 230, 60);
             var xb = UI.ProgressBar(row.transform, 700, 28, Palette.Blue, "Xp"); UI.Place(xb.Root, 0.5f, 0, 0, 34, 700, 28); xb.Root.sizeDelta = new Vector2(700, 28); xb.Set(Progress.XpFraction);
-            Fx.CountUp(coinT, 0, r.Coins, "+{0}", 0.9f);
+            Fx.CountUp(coinT, 0, r.Hints, "+{0}", 0.9f);
             y += rewardH + gap;
 
             // collection (levels) or score (daily)
@@ -86,7 +86,7 @@ namespace WordQuest
             UI.Place((RectTransform)next.transform, 0.5f, 0, 0, by, 640, 112); by += 112 / 2 + 18 + 96 / 2;
             if (canDouble)
             {
-                var dbl = UI.Pill(c, "btn_yellow", "x2 COINS  (AD)", 560, 96, null, 40);
+                var dbl = UI.Pill(c, "btn_yellow", "x2 HINTS  (AD)", 560, 96, null, 40);
                 UI.Place((RectTransform)dbl.transform, 0.5f, 0, 0, by, 560, 96);
                 dbl.onClick.RemoveAllListeners();
                 dbl.onClick.AddListener(() =>
@@ -95,9 +95,9 @@ namespace WordQuest
                     Ads.ShowRewarded(AdPlacement.DoubleReward, ok =>
                     {
                         if (!ok) { if (dbl != null) dbl.interactable = true; Toast("No ad ready. Try again soon.", Palette.Red); return; }
-                        RewardCoins(r.Coins, new Vector2(0, 200));
+                        RewardHints(r.Hints, new Vector2(0, 200));
                         if (dbl != null) dbl.gameObject.SetActive(false);
-                        Fx.CountUp(coinT, r.Coins, r.Coins * 2, "+{0}", 0.6f);
+                        Fx.CountUp(coinT, r.Hints, r.Hints * 2, "+{0}", 0.6f);
                     });
                 });
                 by += 96 / 2 + 18 + 80 / 2;
@@ -113,7 +113,7 @@ namespace WordQuest
             }
 
             if (!SaveSystem.Data.notifAsked) DOTween.Sequence().AppendInterval(1.4f).AppendCallback(NotificationService.AskPermission).SetUpdate(true);
-            if (r.Coins > 0) Fx.Fly(fxLayer, new Vector2(0, 250), CoinTarget(), "coin", Mathf.Clamp(r.Coins / 25, 3, 10), () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.3f, 0.4f), null, 60f, 1.0f, 0.07f);
+            if (r.Hints > 0) Fx.Fly(fxLayer, new Vector2(0, 250), HintTarget(), "pu_hint", Mathf.Clamp(r.Hints * 2, 3, 8), () => Sfx.Play(Sfx.Kind.Coin, 1f + UnityEngine.Random.value * 0.3f, 0.4f), null, 60f, 1.0f, 0.07f);
             if (r.LevelUps > 0) { Sfx.Play(Sfx.Kind.Level); Fx.Burst(fxLayer, new Vector2(0, 200), "spark_star", Palette.Yellow, 14, 520f, 0.9f, 52f); }
             if (r.Stars == 3) Fx.Confetti(fxLayer, 1000, canvasRt.rect.height / 2 + 40, 30);
         }
