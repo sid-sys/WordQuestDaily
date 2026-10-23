@@ -6,6 +6,7 @@ Written 2026-10-21. Read this first if you pick the project up on another machin
 Word-search mobile game. Unity 6000.6.0f1, URP 2D, portrait, Android only. Package `com.coreinteractive.wordquestdaily`, developer "Tetra Developers". All UI is built in C# at runtime (no scenes full of prefabs). See `README.md` for the layout.
 
 ## Where things stand
+- **Release bundle v8 built 2026-10-23**: `Builds/WordQuestDaily-v8.aab` (80 MB, versionCode 8, version 1.2.0, signed with the upload keystore, SHA256 97:7F:21:D5:...:E5:FA same as v7). It has everything under "Latest changes". Not yet uploaded, not tested on a phone. AdMob shows an app-ads.txt warning (21 Oct): the file at https://sid-sys.github.io/app-ads.txt is correct, AdMob just has to re-crawl; the Play Store listing website must be https://sid-sys.github.io.
 - **Live / uploaded on Google Play: version 7** (versionCode 7, version name 1.1.0). It has the new UI, bundle shop, Remove Ads popup, notifications, Daily Quest fixed at 8x8. The owner tested a real purchase on it: IAP works.
 - **Newer code on `main` is NOT released.** Commit `00046a0` (2026-10-07) changed the game screen:
   - only ONE power-up is left: Reveal Word (bulb button top right, 400 coins, max 3, free every 10 levels)
