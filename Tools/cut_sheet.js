@@ -10,6 +10,7 @@ const { PNG } = require(path.join(__dirname, "node_tmp", "node_modules", "pngjs"
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const preview = process.argv.includes("--preview");
+const holes = process.argv.includes("--holes");   // sheets with a baked-in checkerboard: also clear checkerboard seen through handles / rings
 const [sheetPath, namesArg, outArg] = args;
 if (!sheetPath || !namesArg) { console.error("usage: node cut_sheet.js sheet.png name1,name2,... [outDir] [--preview]"); process.exit(1); }
 const names = namesArg.split(",");
@@ -38,7 +39,14 @@ while (stack.length) {
   if (x > 0) push(x - 1, y); if (x < W - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < H - 1) push(x, y + 1);
 }
 // enclosed checkerboard holes (handles, rings): bg-like areas not touching the border that show BOTH white and grey squares
-{
+let G = 0;
+if (holes) {
+  const hist = new Map();
+  for (let p = 0; p < W * H; p++) if (bg[p]) { const mn = Math.min(d[p*4], d[p*4+1], d[p*4+2]); if (mn >= 150 && mn <= 245) hist.set(mn, (hist.get(mn) || 0) + 1); }
+  let best = 0; for (const [k, v] of hist) if (v > best) { best = v; G = k; }
+  console.log("checkerboard grey = " + G);
+}
+if (holes) {
   const seen = new Uint8Array(W * H);
   for (let s = 0; s < W * H; s++) {
     if (bg[s] || seen[s] || !isBgLike(s * 4)) continue;
@@ -46,12 +54,12 @@ while (stack.length) {
     for (let k = 0; k < comp.length; k++) {
       const p = comp[k], x = p % W, y = (p / W) | 0, i = p * 4;
       const mn = Math.min(d[i], d[i + 1], d[i + 2]);
-      if (mn >= 246) white++; else grey++;
+      if (mn >= 246) white++; else if (Math.abs(mn - G) <= 5 && Math.max(d[i], d[i + 1], d[i + 2]) - mn <= 8) grey++;
       const nb = [x > 0 ? p - 1 : -1, x < W - 1 ? p + 1 : -1, y > 0 ? p - W : -1, y < H - 1 ? p + W : -1];
       for (const q of nb) if (q >= 0 && !seen[q] && !bg[q] && isBgLike(q * 4)) { seen[q] = 1; comp.push(q); }
     }
-    const n = comp.length, gf = grey / n;
-    if (n < 9000 && gf > 0.25 && gf < 0.75) for (const p of comp) bg[p] = 1;
+    const n = comp.length, gf = grey / n, wf = white / n;
+    if (n < 6000 && gf > 0.35 && wf > 0.35) for (const p of comp) bg[p] = 1;
   }
 }
 // soften: any remaining pixel next to background that is light gets removed (fringe)
@@ -69,7 +77,8 @@ for (let pass = 0; pass < 2; pass++) {
 }
 
 // ---- 2. blobs (merge near parts with a dilated mask) ----
-const R = 14;
+const mArg = process.argv.find((a) => a.startsWith("--merge="));
+const R = mArg ? +mArg.split("=")[1] : 14;   // how far apart parts of one item may be (px); lower it when items nearly touch
 const dil = new Uint8Array(W * H);
 {
   const tmp = new Uint8Array(W * H);

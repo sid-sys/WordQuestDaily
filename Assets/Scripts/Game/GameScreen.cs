@@ -43,7 +43,7 @@ namespace WordQuest
             body.gameObject.SetActive(false); tabBar.gameObject.SetActive(false);
             gameLayer.gameObject.SetActive(true);
             foreach (Transform c in gameLayer) Destroy(c.gameObject);
-            SetWhiteBackground();
+            SetBackground(SaveSystem.Data.theme);
             BuildGame();
             BeginTutorials();
         }
@@ -304,7 +304,7 @@ namespace WordQuest
                 chip.GetComponentInChildren<Text>().color = Color.black;
                 Fx.Punch(chip, 0.18f, 0.35f);
             }
-            Fx.FloatText(fxLayer, midPos, isNew ? "NEW WORD!" : "+1 WORD", isNew ? Palette.Orange : new Color32(0x17, 0x8A, 0xDC, 255), 48);
+            Fx.FloatText(fxLayer, midPos, isNew ? "NEW WORD!" : "+1 WORD", isNew ? Palette.Yellow : Color.white, 48);
             UpdateProgress(true);
             CheckFinish();
         }

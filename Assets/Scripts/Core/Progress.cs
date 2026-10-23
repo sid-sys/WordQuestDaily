@@ -172,7 +172,13 @@ namespace WordQuest
         }
 
         // ---------------- daily reward (once a day, resets at 00:00) ----------------
-        public static bool CanClaimDailyReward() => D.lastDailyRewardClaimDate != Clock.TodayKey;
+        public static bool CanClaimDailyReward()
+        {
+            if (D.lastDailyRewardClaimDate == Clock.TodayKey) return false;
+            if (Economy.Daily[DailyRewardDayIndex()].Hints > 0) return true;
+            ClaimDailyReward();     // a day without a gift: just move on to the next day
+            return false;
+        }
         public static int DailyRewardDayIndex()
         {
             // a gap of more than one day restarts the 7 day cycle

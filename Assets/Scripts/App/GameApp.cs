@@ -133,9 +133,6 @@ namespace WordQuest
         // =============== background ===============
         static readonly string[] ThemeKeys = { "meadow", "ocean", "candy", "night" };
         public static string ThemeKey(int i) => ThemeKeys[Mathf.Clamp(i, 0, 3)];
-        /// <summary>Plain white background used on the game screen.</summary>
-        public void SetWhiteBackground() { bgImage.sprite = null; bgImage.color = Color.white; }
-
         public void SetBackground(int theme)
         {
             var s = Art.Get("bg_" + ThemeKey(theme));

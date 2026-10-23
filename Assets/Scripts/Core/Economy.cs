@@ -72,14 +72,15 @@ namespace WordQuest
 
         // ---- daily reward, 7 day cycle, shown once per calendar day ----
         public struct Reward { public int Hints; public string Label; }
+        // a gift only on day 3 and day 7 (other days: nothing, the cycle just moves on)
         public static readonly Reward[] Daily =
         {
+            new Reward { Hints = 0, Label = "Keep playing" },
+            new Reward { Hints = 0, Label = "Keep playing" },
             new Reward { Hints = 1, Label = "1 Hint" },
-            new Reward { Hints = 1, Label = "1 Hint" },
-            new Reward { Hints = 2, Label = "2 Hints" },
-            new Reward { Hints = 1, Label = "1 Hint" },
-            new Reward { Hints = 1, Label = "1 Hint" },
-            new Reward { Hints = 2, Label = "2 Hints" },
+            new Reward { Hints = 0, Label = "Keep playing" },
+            new Reward { Hints = 0, Label = "Keep playing" },
+            new Reward { Hints = 0, Label = "Keep playing" },
             new Reward { Hints = 3, Label = "3 Hints" },
         };
 

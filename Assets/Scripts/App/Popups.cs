@@ -194,7 +194,7 @@ namespace WordQuest
                 var head = UI.Label(tile.transform, "DAY " + (i + 1), 28, Palette.Ink);
                 UI.Place(head.rectTransform, 0.5f, 1, 0, -44, 120, 36);
                 var r = Economy.Daily[i];
-                string art = i == 6 ? "chest" : PowerUps.Art[PowerUps.HintIndex];
+                string art = r.Hints == 0 ? "star_empty" : i == 6 ? "chest" : PowerUps.Art[PowerUps.HintIndex];
                 var ic = UI.Icon(tile.transform, art, 108, "Icon");
                 UI.Place(ic.rectTransform, 0.5f, 1, 0, -146, 108, 108);
                 var lab = UI.Label(tile.transform, r.Label, 24, Palette.Ink);
