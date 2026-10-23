@@ -44,6 +44,13 @@ namespace WordQuest
                 else { var n = UI.Label(row, r.Rank.ToString(), 40, Palette.InkSoft); UI.Place(n.rectTransform, 0, 0.5f, 70, 0, 90, 50); }
                 var av = Avatar(row, r.Avatar, 0, 88); UI.Place(av, 0, 0.5f, 180, 0, 88, 88);
                 var nm = UI.Label(row, r.IsYou ? r.Name + " (you)" : r.Name, 38, Palette.Ink, TextAnchor.MiddleLeft); UI.PlaceL(nm.rectTransform, 0, 0.5f, 250, 0, 460, 50);
+                // developer builds only: mark simulated players (every rival is simulated, there is no server yet)
+                if (r.IsBot && Debug.isDebugBuild)
+                {
+                    var tag = UI.Sliced(row, "btn_red", 40, "BotTag"); UI.Place(tag.rectTransform, 0, 0.5f, 600, 0, 90, 40);
+                    var tt = UI.Label(tag.transform, "BOT", 24, Color.white, TextAnchor.MiddleCenter, true); UI.Stretch(tt.rectTransform, 0, 2, 0, 0);
+                    tt.GetComponent<Outline>().effectColor = UI.PillOutline("btn_red");
+                }
                 var pt = UI.Label(row, r.Points.ToString("N0"), 40, Palette.Ink, TextAnchor.MiddleRight); UI.Place(pt.rectTransform, 1, 0.5f, -150, 0, 200, 50);
             }
             EndScroll(content, y);

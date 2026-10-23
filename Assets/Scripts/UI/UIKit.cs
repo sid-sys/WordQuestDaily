@@ -30,7 +30,7 @@ namespace WordQuest
             new Color32(0xF1, 0x4D, 0x53, 255), new Color32(0x41, 0xC0, 0x38, 255), new Color32(0x17, 0x8A, 0xDC, 255),
             new Color32(0xF9, 0xBB, 0x13, 255), new Color32(0x92, 0x4E, 0xF3, 255),
         };
-        public static readonly Color PanelGrey = new Color32(0xEE, 0xF0, 0xF3, 255);
+        public static readonly Color PanelGrey = new Color32(0xE9, 0xEC, 0xF1, 255);
         public static readonly Color WordTodo = new Color32(0xB9, 0xBD, 0xC5, 255);
     }
 

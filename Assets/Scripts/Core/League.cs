@@ -23,7 +23,7 @@ namespace WordQuest
             "Ivy", "Diego", "Anna", "Hugo", "Lily", "Noah", "Ella", "Arjun", "Ruby", "Finn", "Maya"
         };
 
-        public class Row { public string Name; public int Avatar; public int Points; public bool IsYou; public int Rank; }
+        public class Row { public string Name; public int Avatar; public int Points; public bool IsYou; public int Rank; public bool IsBot; }
 
         static PlayerData D => SaveSystem.Data;
 
@@ -37,7 +37,7 @@ namespace WordQuest
                 int pts = 0;
                 for (int day = 0; day <= daysIntoWeek; day++)
                     pts += Mathf.RoundToInt((60f + (float)rng.NextDouble() * 220f) * strength);
-                list.Add(new Row { Name = Names[(i * 5 + tier * 3 + Levels.DateSeed(week)) % Names.Length], Avatar = rng.Next(12), Points = pts });
+                list.Add(new Row { Name = Names[(i * 5 + tier * 3 + Levels.DateSeed(week)) % Names.Length], Avatar = rng.Next(12), Points = pts, IsBot = true });
             }
             return list;
         }
@@ -92,7 +92,7 @@ namespace WordQuest
             var rng = new System.Random(Levels.DateSeed(Clock.TodayKey));
             var list = new List<Row>();
             for (int i = 0; i < 24; i++)
-                list.Add(new Row { Name = Names[i], Avatar = rng.Next(12), Points = 1800 + rng.Next(0, 2600) });
+                list.Add(new Row { Name = Names[i], Avatar = rng.Next(12), Points = 1800 + rng.Next(0, 2600), IsBot = true });
             bool done = D.dailyQuestDoneDate == Clock.TodayKey;
             list.Add(new Row { Name = D.name, Avatar = D.avatar, Points = done ? D.dailyQuestScore : 0, IsYou = true });
             list = list.OrderByDescending(r => r.Points).ToList();

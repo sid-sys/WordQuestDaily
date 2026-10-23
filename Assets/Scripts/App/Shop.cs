@@ -153,13 +153,13 @@ namespace WordQuest
             // footer: name + price
             var strip = UI.Sliced(card.transform, bd.Strip, 92, "Strip");
             strip.rectTransform.anchorMin = new Vector2(0, 0); strip.rectTransform.anchorMax = new Vector2(1, 0); strip.rectTransform.pivot = new Vector2(0.5f, 0);
-            strip.rectTransform.offsetMin = new Vector2(18, 16); strip.rectTransform.offsetMax = new Vector2(-18, 108);
+            strip.rectTransform.offsetMin = new Vector2(18, 16); strip.rectTransform.offsetMax = new Vector2(-(18 + 300 + 22), 108);   // the name strip stops before the price button
             var nm = UI.Label(strip.transform, bd.Name, 44, Color.white, TextAnchor.MiddleLeft, true);
             nm.GetComponent<Outline>().effectColor = UI.PillOutline(bd.Strip);
-            UI.PlaceL(nm.rectTransform, 0, 0.5f, 44, 0, 460, 60);
+            UI.PlaceL(nm.rectTransform, 0, 0.5f, 36, 0, 520, 60);
             string id = bd.Id;
-            var buy = UI.Pill(strip.transform, "btn_green", Iap.Price(id), 300, 70, () => Iap.Buy(id, msg => { if (msg != null) Toast(msg, Palette.Red); }), 38);
-            UI.Place((RectTransform)buy.transform, 1, 0.5f, -180, 0, 300, 70);
+            var buy = UI.Pill(card.transform, "btn_green", Iap.Price(id), 300, 84, () => Iap.Buy(id, msg => { if (msg != null) Toast(msg, Palette.Red); }), 40);   // its own button, not inside the strip
+            UI.Place((RectTransform)buy.transform, 1, 0, -(18 + 150), 62, 300, 84);
             if (!string.IsNullOrEmpty(bd.Ribbon))
             {
                 var tag = UI.Sliced(card.transform, "btn_red", 52, "Tag");

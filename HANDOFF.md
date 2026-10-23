@@ -17,6 +17,14 @@ Word-search mobile game. Unity 6000.6.0f1, URP 2D, portrait, Android only. Packa
   - daily reward + bundles now give Reveal Word instead of Shuffle/Hint/Letter (bundle contents: 1/2/4/6 Reveal Words, Ad-Free Plus 2)
 - This change was checked only in the Unity editor (portrait screenshots, no layout problems except a known false alarm on the SKIP button). **It was never run on a phone and no new .aab was built.**
 
+## Latest changes (2026-10-23, not yet released, not tested on a phone)
+- Game screen background is plain white (`SetWhiteBackground`); board and word list panel color `Palette.PanelGrey` #E9ECF1.
+- League: all rivals are simulated (no server). In debug/editor builds each simulated row shows a red BOT tag (`Row.IsBot`, `Debug.isDebugBuild`); release builds show nothing.
+- Economy rebalanced for Reveal Word only: cost 300 coins, max 5, free every 10 levels. Bundles: Starter 300c + 2 RW (Rs99), Player 900c + 6 RW (Rs299), Power 2000c + 14 RW (Rs599), Mega 4000c + 25 RW + Rainbow effect (Rs999), Ad-Free Plus 600c + 3 RW (Rs399). Daily reward: 100c, 150c, 1 RW, 200c, 250c, 1 RW, 400c + 1 RW.
+- Shop bundle card: price button is its own button, the name strip stops before it.
+- `Docs/ICON_PROMPTS.md`: ChatGPT prompts to regenerate every icon as sprite sheets. Python is no longer installed/working on this PC, so `Tools/*.py` cannot run until it is reinstalled.
+- Play Console: bundle descriptions must match the new contents above.
+
 ## To do (in order)
 1. Test on a phone (debug build): swipe colors, Reveal Word (use, buy at 0 left), pause, Shop, daily reward day 2/4/6/7, bundles still deliver, result popup, level 1 swipe tutorial, upgrade from an existing save (old power-ups -> coins).
 2. Build release **version 8** (`BuildTool.Build(true, 8, "1.2.0")`, see Build below), check it is signed with the upload keystore, upload to Internal testing, test, then Production.
