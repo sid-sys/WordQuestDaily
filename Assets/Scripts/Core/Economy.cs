@@ -23,7 +23,7 @@ namespace WordQuest
         public static readonly int[] Max = { 0, 0, 0, 0, 5 };
         public static readonly int[] FreeEvery = { 0, 0, 0, 0, 10 };   // completed levels per free power-up (only Reveal Word exists)
         public static readonly int[] UnlockLevel = { 3, 1, 7, 12, 18 };   // level whose tutorial unlocks each power-up
-        public static readonly string[] Art = { "pu_shuffle", "pu_hint", "pu_letter", "pu_finder", "pu_word" };
+        public static readonly string[] Art = { "pu_shuffle", "pu_hint", "pu_letter", "pu_finder", "pu_hint" };   // Reveal Word uses the magnifying glass
         public static readonly PowerUp[] All = { PowerUp.Word };   // the only power-up left in the game
 
         public static int Count(PlayerData d, PowerUp p) => d.powers[(int)p];

@@ -236,7 +236,7 @@ namespace WordQuest
         void BuildRevealButton(RectTransform root)
         {
             var g = game;
-            var btn = UI.GlyphButton(root, "g_bulb", new Color32(0xF5, 0xA6, 0x23, 255), 96, "Reveal", 0.6f);
+            var btn = UI.GlyphButton(root, PowerUps.Art[(int)PowerUp.Word], new Color32(0xF5, 0xA6, 0x23, 255), 96, "Reveal", 0.74f);
             UI.Place(btn.rectTransform, 1, 1, -70, -72, 96, 96);
             UI.Click(btn, () => UsePower(PowerUp.Word));
             g.RevealButton = btn.rectTransform;

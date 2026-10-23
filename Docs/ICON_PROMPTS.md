@@ -34,9 +34,9 @@ Lay the 6 items out in a grid of 3 columns and 2 rows on one square image with a
 ```
 
 ## Sheet 3 - prizes
-`trophy, pu_word, mystery, scroll, book, noads_badge`
+`trophy, pu_hint, mystery, scroll, book, noads_badge`
 ```
-[STYLE] A sprite sheet of 6 icons in reading order: 1 gold trophy cup with two handles, 2 pink magic wand with golden stars (Reveal Word power-up), 3 round purple orb with a white question mark shape, 4 rolled parchment scroll with a red ribbon, 5 open book with white pages and a blue cover, 6 round red badge with a thick white diagonal slash across a white television shape (no ads badge, no text). [LAYOUT]
+[STYLE] A sprite sheet of 6 icons in reading order: 1 gold trophy cup with two handles, 2 magnifying glass with a blue glass lens and a gold handle (Reveal Word / hint power-up), 3 round purple orb with a white question mark shape, 4 rolled parchment scroll with a red ribbon, 5 open book with white pages and a blue cover, 6 round red badge with a thick white diagonal slash across a white television shape (no ads badge, no text). [LAYOUT]
 ```
 
 ## Sheet 4 - status
@@ -111,4 +111,4 @@ Vertical mobile game background: bright blue gradient (lighter cyan at the top a
 ```
 
 ## Not needed any more
-Shuffle, Hint, Reveal Letter and Word Finder icons (`pu_shuffle, pu_hint, pu_letter, pu_finder`) were removed with those power-ups. Also unused in code: `node_*`, `hand_press`, `spark_ring`, `heart`, `mystery_box`, `piggy`, `cloud`, `logo_mark`.
+Shuffle, Reveal Letter and Word Finder icons (`pu_shuffle, pu_letter, pu_finder`) and the wand `pu_word` were removed. Reveal Word now uses the magnifying glass `pu_hint`. Also unused in code: `node_*`, `hand_press`, `spark_ring`, `heart`, `mystery_box`, `piggy`, `cloud`, `logo_mark`.
