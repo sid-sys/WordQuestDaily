@@ -16,6 +16,8 @@ namespace WordQuest
         static InterstitialAd interstitial;
         static bool started, loadingRewarded, loadingInterstitial;
         static float nextTry;
+        static BannerView banner;
+        static bool wantBanner;
         public static string Status = "starting";
 
         public static void Init()
@@ -47,8 +49,31 @@ namespace WordQuest
         {
             if (!started || Time.unscaledTime < nextTry) return;
             nextTry = Time.unscaledTime + 30f;
+            if (wantBanner && banner == null) CreateBanner();
             if (rewarded == null && !loadingRewarded) LoadRewarded();
             if (interstitial == null && !loadingInterstitial) LoadInterstitial();
+        }
+
+        /// <summary>Small banner at the bottom of the screen while a level is played.</summary>
+        public static void ShowBanner()
+        {
+            wantBanner = true;
+            if (Application.isEditor || !started) return;       // Tick() creates it as soon as ads have started
+            if (banner == null) CreateBanner(); else banner.Show();
+        }
+
+        public static void HideBanner()
+        {
+            wantBanner = false;
+            if (banner != null) banner.Hide();
+        }
+
+        static void CreateBanner()
+        {
+            if (!started || !AdIds.BannerAvailable) return;
+            banner = new BannerView(AdIds.Banner, AdSize.Banner, AdPosition.Bottom);
+            banner.LoadAd(new AdRequest());
+            banner.Show();
         }
 
         static void LoadRewarded()

@@ -18,6 +18,7 @@ Word-search mobile game. Unity 6000.6.0f1, URP 2D, portrait, Android only. Packa
 - This change was checked only in the Unity editor (portrait screenshots, no layout problems except a known false alarm on the SKIP button). **It was never run on a phone and no new .aab was built.**
 
 ## Latest changes (2026-10-23, not yet released, not tested on a phone)
+- **Banner ad** at the bottom of the game screen (not shown after Remove Ads). Code: `AdMobService.ShowBanner/HideBanner`, `Ads.BannerEnabled/BannerHeight`, space reserved in `BuildGame`; the grid also moved up. Editor shows a grey BANNER AD stand-in. **TODO (owner): create a Banner ad unit in AdMob and paste its id into `AdIds.RealBanner`**; until then release builds show no banner (debug builds use Google test banners). Test on a phone that the banner does not cover the board and that Remove Ads hides it.
 - **No coins any more. The Hint is the only currency** (it finds a whole word; magnifying glass icon `pu_hint`, stored in `PlayerData.powers[4]`, helper `PowerUps.HintIndex`). All numbers are in `Assets/Scripts/Core/Economy.cs`.
   - New player: 4 hints. First clear of a level: 1 hint, 2 on every 5th level, 3 on every 10th, +1 for 3 stars. Replays: 0. Daily Quest: 2 (+1 for 3 stars). Perfect Day: 2. Level-up: 0.
   - Rewarded ad: +2 hints, 5 a day (shop row, "out of hints" popup, "x2 HINTS (AD)" on the result popup). Ad unit placement is still named `AdPlacement.Coins`.

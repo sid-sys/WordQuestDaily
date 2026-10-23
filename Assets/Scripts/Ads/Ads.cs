@@ -31,6 +31,26 @@ namespace WordQuest
 #endif
         }
 
+        /// <summary>True when a banner is shown on the game screen (not for players who bought Remove Ads, and only when a banner unit id exists).</summary>
+        public static bool BannerEnabled => SaveSystem.Data != null && !SaveSystem.Data.adsRemoved && AdIds.BannerAvailable;
+
+        /// <summary>Height to keep free at the bottom of the game screen, in canvas pixels (the canvas is 1080 wide).</summary>
+        public static float BannerHeight => !BannerEnabled ? 0f : 50f * (Screen.dpi > 0 ? Screen.dpi : 160f) / 160f * (1080f / Mathf.Max(1, Screen.width)) + 24f;
+
+        public static void ShowBanner()
+        {
+#if WQ_ADMOB
+            if (BannerEnabled) AdMobService.ShowBanner();
+#endif
+        }
+
+        public static void HideBanner()
+        {
+#if WQ_ADMOB
+            AdMobService.HideBanner();
+#endif
+        }
+
         /// <summary>Full-screen ad between levels. Never shown to players who bought Remove Ads.</summary>
         public static void MaybeShowInterstitial(Action next)
         {

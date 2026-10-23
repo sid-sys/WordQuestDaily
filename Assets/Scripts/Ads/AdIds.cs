@@ -14,9 +14,13 @@ namespace WordQuest
         const string RealRewarded = "ca-app-pub-2778983812131153/7183825139";       // coins, double reward and hint share this unit
         const string TestInterstitial = "ca-app-pub-3940256099942544/1033173712";
         const string TestRewarded = "ca-app-pub-3940256099942544/5224354917";
+        const string TestBanner = "ca-app-pub-3940256099942544/6300978111";
+        const string RealBanner = "";          // TODO: create a Banner ad unit in AdMob and paste its id here. Empty = no banner in release builds.
 
         public static bool UseTest => Application.isEditor || Debug.isDebugBuild;
         public static string Interstitial => UseTest ? TestInterstitial : RealInterstitial;
         public static string Rewarded(AdPlacement placement) => UseTest ? TestRewarded : RealRewarded;
+        public static string Banner => UseTest ? TestBanner : RealBanner;
+        public static bool BannerAvailable => !string.IsNullOrEmpty(Banner);
     }
 }

@@ -45,6 +45,7 @@ namespace WordQuest
             foreach (Transform c in gameLayer) Destroy(c.gameObject);
             SetBackground(SaveSystem.Data.theme);
             BuildGame();
+            if (Ads.BannerEnabled) Ads.ShowBanner();
             BeginTutorials();
         }
 
@@ -52,6 +53,7 @@ namespace WordQuest
         {
             if (game == null) return;
             foreach (Transform c in gameLayer) Destroy(c.gameObject);
+            Ads.HideBanner();
             game = null;
         }
 
@@ -143,13 +145,14 @@ namespace WordQuest
             g.Banner.gameObject.SetActive(false);
 
             // --- board: a big white card, as wide as the screen allows ---
-            float boardTop = pillY + 76 + 14;
-            float availH = rootH - boardTop - 40, availW = 1080 - 40 - 32;
+            float boardTop = pillY + 76 + 4;
+            float bannerH = Ads.BannerHeight;                      // room for the banner ad at the bottom
+            float availH = rootH - boardTop - 40 - bannerH, availW = 1080 - 40 - 32;
             float cell = Mathf.Min(availW / puzzle.Cols, availH / puzzle.Rows, 190f);
             float bw = cell * puzzle.Cols, bh = cell * puzzle.Rows;
             var boardHolder = UI.Node(root, "Board");
             float extra = Mathf.Max(0f, availH - bh);
-            float boardCenterY = -(boardTop + Mathf.Min(extra * 0.45f, 260f) + (bh + 36) / 2f);
+            float boardCenterY = -(boardTop + Mathf.Min(extra * 0.12f, 70f) + (bh + 36) / 2f);
             UI.Place(boardHolder, 0.5f, 1, 0, boardCenterY, bw + 36, bh + 36);
             var panel = UI.Round(boardHolder, Palette.PanelGrey, 34, "Panel");
             UI.Stretch(panel.rectTransform);
@@ -172,6 +175,13 @@ namespace WordQuest
             };
             Fx.PopIn(boardHolder, 0.4f);
 
+            if (Ads.BannerEnabled && (Application.isEditor))      // stand-in so the layout can be checked in the editor
+            {
+                var ph = UI.Round(root, new Color(0.1f, 0.1f, 0.15f, 0.85f), 20, "BannerPlaceholder");
+                ph.rectTransform.anchorMin = new Vector2(0, 0); ph.rectTransform.anchorMax = new Vector2(1, 0); ph.rectTransform.pivot = new Vector2(0.5f, 0);
+                ph.rectTransform.offsetMin = new Vector2(20, 8); ph.rectTransform.offsetMax = new Vector2(-20, bannerH - 16);
+                var pt = UI.Label(ph.transform, "BANNER AD", 36, Color.white); UI.Stretch(pt.rectTransform);
+            }
             g.TutLayer = UI.Stretch(UI.Node(root, "Tutorial"));
             UpdateProgress(false);
         }
