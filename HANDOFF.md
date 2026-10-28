@@ -1,6 +1,6 @@
 # HANDOFF - Word Quest Daily
 
-Written 2026-10-21. Read this first if you pick the project up on another machine or account.
+Written 2026-10-21, last updated 2026-10-28. Read this first if you pick the project up on another machine or account.
 
 ## What this is
 Word-search mobile game. Unity 6000.6.0f1, URP 2D, portrait, Android only. Package `com.coreinteractive.wordquestdaily`, developer "Tetra Developers". All UI is built in C# at runtime (no scenes full of prefabs). See `README.md` for the layout.
@@ -31,6 +31,18 @@ Word-search mobile game. Unity 6000.6.0f1, URP 2D, portrait, Android only. Packa
 - League: all rivals are simulated (no server). Debug/editor builds show a red BOT tag (`Row.IsBot`).
 - Shop bundle card: price button is its own button, the name strip stops before it.
 - **New icons are in** (2026-10-23): the 3 ChatGPT sheets (`Assets/Art/Sheets/s1_core.png`, `s2_ui.png`, `s3_avatars.png`) were cut with `Tools/cut_sheet.js` into `Assets/Resources/Art` (66 sprites replaced: core icons, tabs, categories, avatars, medals, mascot, hand, sounds). Re-cut commands: `node Tools/cut_sheet.js Assets/Art/Sheets/s2_ui.png <names> Assets/Resources/Art --holes` (sheet 3 also `--merge=3`; `-` skips a cell; needs `cd Tools/node_tmp && npm install pngjs`). `spark_glow` was kept from the old art. Still old: white `g_*` symbols, ribbons, logo, splash, bg. Check every screen on a phone for odd icons.
+
+## Release notes for v8 (paste into Play Console, max 500 characters)
+```
+<en-US>
+Hints replace coins! Earn hints by finishing levels, or watch a short video for 2 free hints. New hint packs, daily gifts on day 3 and 7, fresh new icons and avatars, and a bigger game board. Many fixes. If you bought Remove Ads, tap Restore Purchases in the Shop.
+</en-US>
+```
+
+## Left to do right now (as of 2026-10-28)
+- v8 is built but NOT uploaded and NOT tested on a phone. Nothing about banner, hints, purchases or rewarded ads was checked on a device.
+- Unity may rewrite `ProjectSettings/ProjectSettings.asset` after a build (it empties `preloadedAssets`, which removes `InputSystem_Actions`). Harmless, do not commit it.
+- If you open the project on another account: get `Keystore/` from the owner first (see "NOT in git").
 
 ## To do (in order)
 1. Test on a phone (debug build): swipe colors, Reveal Word (use, buy at 0 left), pause, Shop, daily reward day 2/4/6/7, bundles still deliver, result popup, level 1 swipe tutorial, upgrade from an existing save (old power-ups -> coins).
